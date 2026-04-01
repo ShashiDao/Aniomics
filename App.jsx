@@ -3,8 +3,8 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { 
-  Library, Sparkles, Zap, Scroll, Layers, ChevronLeft, 
-  Target, ChevronRight, CheckCircle2, Star, Flame
+  Library, Sparkles, Zap, Scroll, ChevronLeft, 
+  Target, ChevronRight, CheckCircle2, Star
 } from 'lucide-react';
 
 // --- FIREBASE CONFIGURATION ---
@@ -25,11 +25,11 @@ const db = getFirestore(app);
 
 // --- RPG LOGIC & CONSTANTS ---
 const RANKS = [
-  { id: 1, title: 'Wanderer', minXp: 0, color: 'text-slate-400', bar: 'bg-slate-400' },
-  { id: 2, title: 'Initiate', minXp: 100, color: 'text-emerald-600', bar: 'bg-emerald-600' },
-  { id: 3, title: 'Seeker', minXp: 500, color: 'text-blue-600', bar: 'bg-blue-600' },
-  { id: 4, title: 'Scholar', minXp: 1500, color: 'text-purple-600', bar: 'bg-purple-600' },
-  { id: 5, title: 'Arch-Librarian', minXp: 5000, color: 'text-[#A08B63]', bar: 'bg-[#A08B63]' }
+  { id: 1, title: 'Wanderer', minXp: 0, color: 'text-white/40', bar: 'bg-white/40' },
+  { id: 2, title: 'Initiate', minXp: 100, color: 'text-[#F3E5AB]/60', bar: 'bg-[#F3E5AB]/60' },
+  { id: 3, title: 'Seeker', minXp: 500, color: 'text-[#F3E5AB]/80', bar: 'bg-[#F3E5AB]/80' },
+  { id: 4, title: 'Scholar', minXp: 1500, color: 'text-[#F3E5AB]', bar: 'bg-[#F3E5AB]' },
+  { id: 5, title: 'Arch-Librarian', minXp: 5000, color: 'text-[#E6C35C]', bar: 'bg-[#E6C35C]' }
 ];
 
 const DAILY_QUESTS = [
@@ -38,21 +38,41 @@ const DAILY_QUESTS = [
   { id: 'q3', title: 'Seeker of Truth', xp: 100, desc: 'Discover 3 new titles. (Claimable)' }
 ];
 
-// --- ATMOSPHERE COMPONENTS ---
-const Candlelight = () => (
-  <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden">
-    <div className="w-[150vw] h-[150vh] bg-[radial-gradient(circle_at_center,rgba(160,139,99,0.08)_0%,transparent_60%)] animate-flicker mix-blend-screen" />
-  </div>
-);
+// --- 3D STARDUST COMPONENT ---
+const Stardust = () => {
+  const stars = Array.from({ length: 60 }).map((_, i) => {
+    const size = Math.random() * 3 + 0.5; // Varying sizes for 3D depth (0.5px to 3.5px)
+    const duration = Math.random() * 15 + 10; // Varying speeds (10s to 25s)
+    return {
+      id: i,
+      left: `${Math.random() * 100}%`,
+      animationDuration: `${duration}s`,
+      animationDelay: `${Math.random() * 10}s`,
+      size: `${size}px`,
+      opacity: Math.random() * 0.5 + 0.1,
+      blur: size > 2 ? 'blur-[1px]' : 'blur-none'
+    };
+  });
 
-const CornerAccents = () => (
-  <div className="fixed inset-4 pointer-events-none z-20">
-    <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-[#A08B63]/40" />
-    <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-[#A08B63]/40" />
-    <div className="absolute bottom-0 left-0 w-8 h-8 border-b border-l border-[#A08B63]/40" />
-    <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-[#A08B63]/40" />
-  </div>
-);
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {stars.map(s => (
+        <div 
+          key={s.id} 
+          className={`absolute bg-[#F3E5AB] rounded-full opacity-0 animate-stardust ${s.blur}`}
+          style={{ 
+            left: s.left, 
+            width: s.size, 
+            height: s.size, 
+            animationDuration: s.animationDuration, 
+            animationDelay: s.animationDelay,
+            boxShadow: `0 0 ${s.size * 2}px rgba(243,229,171,${s.opacity})`
+          }} 
+        />
+      ))}
+    </div>
+  );
+};
 
 // --- MAIN APP COMPONENT ---
 export default function App() {
@@ -82,7 +102,7 @@ export default function App() {
   }, []);
 
   const handleRitual = async () => {
-    const n = prompt("Inscribe your Name upon the parchment:");
+    const n = prompt("Inscribe your Name upon the obsidian:");
     if (!n) return;
     const p = { name: n, xp: 0, questsCompleted: ['q2'] }; 
     setProfile(p);
@@ -129,40 +149,45 @@ export default function App() {
   const xpProgress = nextRank.id === currentRank.id ? 100 : ((profile.xp - currentRank.minXp) / (nextRank.minXp - currentRank.minXp)) * 100;
 
   return (
-    <div className="h-screen w-full bg-[#0C0E0C] text-[#A08B63] overflow-hidden relative flex flex-col items-center justify-center font-['Inter',_sans-serif]">
+    <div className="h-screen w-full bg-[#050505] text-[#F3E5AB] overflow-hidden relative flex flex-col items-center justify-center font-inter">
       
       {/* Injecting Fonts & CSS Animations */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
         
-        @keyframes flicker {
-          0%, 100% { opacity: 0.8; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.02); }
-          25%, 75% { opacity: 0.7; transform: scale(0.98); }
+        @keyframes stardust {
+          0% { transform: translateY(-10vh) translateX(0); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(110vh) translateX(20px); opacity: 0; }
         }
-        .animate-flicker { animation: flicker 4s ease-in-out infinite alternate; }
+        .animate-stardust { animation-name: stardust; animation-timing-function: linear; animation-iteration-count: infinite; }
         
         .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      <Candlelight />
-      <CornerAccents />
+      <Stardust />
 
       <div className="z-10 w-full h-full flex flex-col relative">
         {stage === 'entrance' ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-            {/* Sacred Archway Motif */}
-            <div className="border border-[#A08B63]/30 rounded-t-full pt-16 pb-10 px-8 flex flex-col items-center relative bg-gradient-to-b from-[#A08B63]/5 to-transparent shadow-[0_0_30px_rgba(160,139,99,0.05)]">
-              <Flame size={48} className="text-[#A08B63]/60 mb-6 animate-pulse" />
-              <h1 className="text-4xl tracking-[0.3em] font-cinzel font-semibold text-[#A08B63] drop-shadow-md">ANIOMICS</h1>
+            {/* Sacred Archway Motif with Glow */}
+            <div className="border border-[#F3E5AB]/20 rounded-t-full pt-20 pb-12 px-10 flex flex-col items-center relative bg-white/5 backdrop-blur-xl shadow-[0_0_30px_rgba(243,229,171,0.05)]">
               
-              <div className="w-[1px] h-16 bg-gradient-to-b from-[#A08B63]/50 to-transparent mx-auto my-6" />
+              {/* Soft Amber Radial Gradient (Candlelight) */}
+              <div className="absolute top-16 w-32 h-32 bg-[radial-gradient(circle_at_center,rgba(230,195,92,0.25)_0%,transparent_70%)] blur-xl pointer-events-none" />
               
-              <p className="text-[10px] tracking-[0.2em] text-[#A08B63]/50 uppercase font-light mb-10">The Grand Library</p>
+              <Library size={56} className="text-[#E6C35C] mb-6 relative z-10 drop-shadow-[0_0_15px_rgba(230,195,92,0.5)]" />
+              <h1 className="text-4xl tracking-[0.3em] font-cinzel font-semibold text-[#F3E5AB] relative z-10">ANIOMICS</h1>
               
-              <button onClick={handleRitual} className="px-8 py-3 border border-[#A08B63]/40 bg-[#A08B63]/10 hover:bg-[#A08B63]/20 transition-colors rounded-sm text-[10px] tracking-[0.2em] uppercase backdrop-blur-sm font-cinzel">
+              <div className="w-[1px] h-16 bg-gradient-to-b from-[#F3E5AB]/50 to-transparent mx-auto my-6" />
+              
+              <p className="text-[10px] tracking-[0.3em] text-white/50 uppercase font-inter font-light mb-12">The Grand Library</p>
+              
+              <button onClick={handleRitual} className="px-8 py-4 border border-[#F3E5AB]/30 bg-[#F3E5AB]/10 hover:bg-[#F3E5AB]/20 transition-colors rounded-sm text-[10px] tracking-[0.3em] uppercase backdrop-blur-md font-cinzel animate-pulse text-[#E6C35C] shadow-[0_0_15px_rgba(243,229,171,0.1)]">
                 Initiate Ritual
               </button>
             </div>
@@ -171,27 +196,27 @@ export default function App() {
           <div className="w-full h-full flex flex-col p-6 pt-12">
             
             {/* RPG Header */}
-            <header className="mb-8 border-b border-[#A08B63]/20 pb-4">
-              <div className="flex justify-between items-end mb-3">
+            <header className="mb-8">
+              <div className="flex justify-between items-end mb-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Star size={12} className={currentRank.color} />
-                    <p className={`text-[10px] font-bold tracking-widest uppercase ${currentRank.color}`}>
+                    <p className={`text-[10px] font-bold tracking-[0.3em] uppercase font-cinzel ${currentRank.color}`}>
                       {currentRank.title}
                     </p>
                   </div>
-                  <h2 className="text-xl tracking-widest uppercase font-cinzel text-[#A08B63]">{profile.name}</h2>
+                  <h2 className="text-xl tracking-[0.3em] uppercase font-cinzel text-[#F3E5AB]">{profile.name}</h2>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] tracking-widest text-[#A08B63]/50 uppercase mb-1">Knowledge</p>
-                  <p className="text-sm tracking-widest font-cinzel">{profile.xp} <span className="text-[#A08B63]/40 text-[10px]">/ {nextRank.minXp}</span></p>
+                  <p className="text-[9px] tracking-[0.3em] text-white/50 uppercase mb-1 font-inter">Knowledge</p>
+                  <p className="text-sm tracking-[0.2em] font-cinzel text-[#E6C35C]">{profile.xp} <span className="text-white/30 text-[10px]">/ {nextRank.minXp}</span></p>
                 </div>
               </div>
               
-              {/* XP Progress Bar */}
-              <div className="h-[2px] w-full bg-[#333223] overflow-hidden">
+              {/* Glowing XP Progress Bar */}
+              <div className="h-[2px] w-full bg-white/10 overflow-hidden shadow-[0_0_25px_rgba(243,229,171,0.1)] rounded-full">
                 <div 
-                  className={`h-full ${currentRank.bar} transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(160,139,99,0.5)]`} 
+                  className={`h-full ${currentRank.bar} transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(230,195,92,0.8)]`} 
                   style={{ width: `${xpProgress}%` }}
                 />
               </div>
@@ -203,35 +228,35 @@ export default function App() {
               {/* STAGE: HALL */}
               {stage === 'hall' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <p className="text-[10px] tracking-[0.2em] text-[#A08B63]/50 uppercase text-center font-cinzel mb-4">Select a Chamber</p>
+                  <p className="text-[10px] tracking-[0.3em] text-white/50 uppercase text-center font-cinzel mb-4">Select a Chamber</p>
                   
                   <div className="grid grid-cols-2 gap-4">
                     {/* Motion Chamber */}
-                    <div onClick={() => fetchData('ANIME')} className="h-56 rounded-t-full border border-[#A08B63]/30 bg-gradient-to-br from-[#2A3A2F] to-transparent p-4 flex flex-col items-center justify-end relative overflow-hidden backdrop-blur-md cursor-pointer group hover:border-[#A08B63]/60 transition-all">
-                      <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#A08B63]/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                      <Zap size={24} className="text-[#A08B63]/60 mb-4" />
-                      <h3 className="text-lg tracking-widest uppercase font-cinzel mb-1">Motion</h3>
-                      <p className="text-[8px] tracking-widest text-[#A08B63]/50 uppercase mb-4">Anime Archives</p>
+                    <div onClick={() => fetchData('ANIME')} className="h-56 rounded-t-full border border-[#F3E5AB]/20 bg-white/5 backdrop-blur-xl shadow-[0_0_25px_rgba(243,229,171,0.05)] p-4 flex flex-col items-center justify-end relative overflow-hidden cursor-pointer group hover:border-[#E6C35C]/50 hover:shadow-[0_0_30px_rgba(230,195,92,0.15)] transition-all duration-500">
+                      <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#F3E5AB]/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                      <Zap size={24} className="text-[#E6C35C] mb-4 drop-shadow-[0_0_10px_rgba(230,195,92,0.5)]" />
+                      <h3 className="text-lg tracking-[0.3em] uppercase font-cinzel mb-2 text-[#F3E5AB]">Motion</h3>
+                      <p className="text-[9px] tracking-[0.2em] text-white/50 uppercase mb-4 font-inter">Anime Archives</p>
                     </div>
                     
                     {/* Ink Chamber */}
-                    <div onClick={() => fetchData('MANGA')} className="h-56 rounded-t-full border border-[#A08B63]/30 bg-gradient-to-br from-[#333223] to-transparent p-4 flex flex-col items-center justify-end relative overflow-hidden backdrop-blur-md cursor-pointer group hover:border-[#A08B63]/60 transition-all">
-                      <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#A08B63]/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                      <Scroll size={24} className="text-[#A08B63]/60 mb-4" />
-                      <h3 className="text-lg tracking-widest uppercase font-cinzel mb-1">Ink</h3>
-                      <p className="text-[8px] tracking-widest text-[#A08B63]/50 uppercase mb-4">Manga Archives</p>
+                    <div onClick={() => fetchData('MANGA')} className="h-56 rounded-t-full border border-[#F3E5AB]/20 bg-white/5 backdrop-blur-xl shadow-[0_0_25px_rgba(243,229,171,0.05)] p-4 flex flex-col items-center justify-end relative overflow-hidden cursor-pointer group hover:border-[#E6C35C]/50 hover:shadow-[0_0_30px_rgba(230,195,92,0.15)] transition-all duration-500">
+                      <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#F3E5AB]/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                      <Scroll size={24} className="text-[#E6C35C] mb-4 drop-shadow-[0_0_10px_rgba(230,195,92,0.5)]" />
+                      <h3 className="text-lg tracking-[0.3em] uppercase font-cinzel mb-2 text-[#F3E5AB]">Ink</h3>
+                      <p className="text-[9px] tracking-[0.2em] text-white/50 uppercase mb-4 font-inter">Manga Archives</p>
                     </div>
                   </div>
 
                   {/* Quests Entry */}
-                  <div onClick={() => setStage('quests')} className="mt-6 h-16 border-y border-[#A08B63]/20 bg-[#A08B63]/5 px-4 flex items-center justify-between backdrop-blur-md cursor-pointer hover:bg-[#A08B63]/10 transition-colors">
+                  <div onClick={() => setStage('quests')} className="mt-6 h-16 border border-[#F3E5AB]/20 bg-white/5 backdrop-blur-xl shadow-[0_0_25px_rgba(243,229,171,0.05)] px-5 flex items-center justify-between cursor-pointer hover:border-[#E6C35C]/40 transition-all duration-300 rounded-sm">
                     <div className="flex items-center gap-4">
-                      <Target size={16} className="text-[#A08B63]/70" />
+                      <Target size={18} className="text-[#E6C35C]" />
                       <div>
-                        <h3 className="text-xs tracking-widest uppercase font-cinzel">Sacred Directives</h3>
+                        <h3 className="text-xs tracking-[0.3em] uppercase font-cinzel text-[#F3E5AB]">Sacred Directives</h3>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-[#A08B63]/40" />
+                    <ChevronRight size={16} className="text-[#F3E5AB]/40" />
                   </div>
                 </div>
               )}
@@ -239,22 +264,22 @@ export default function App() {
               {/* STAGE: SANCTUARY (Library View) */}
               {stage === 'sanctuary' && (
                 <div className="animate-in fade-in duration-500">
-                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-widest text-[#A08B63]/60 uppercase mb-6 hover:text-[#A08B63] transition-colors font-cinzel">
+                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-white/50 uppercase mb-6 hover:text-[#F3E5AB] transition-colors font-cinzel">
                     <ChevronLeft size={14} /> Depart Chamber
                   </button>
                   
                   <div className="grid grid-cols-2 gap-4">
                     {loading ? (
                       <div className="col-span-2 flex flex-col items-center justify-center py-20 opacity-70">
-                        <Flame className="animate-pulse mb-4 text-[#A08B63]" size={32} />
-                        <p className="text-[10px] tracking-[0.2em] uppercase font-cinzel">Consulting Tomes...</p>
+                        <Sparkles className="animate-pulse mb-4 text-[#E6C35C] drop-shadow-[0_0_15px_rgba(230,195,92,0.5)]" size={32} />
+                        <p className="text-[10px] tracking-[0.3em] uppercase font-cinzel text-[#F3E5AB]">Consulting Tomes...</p>
                       </div>
                     ) : (
                       data.map(item => (
-                        <div key={item.id} className="aspect-[2/3] rounded-t-full overflow-hidden border border-[#A08B63]/20 bg-[#333223]/30 relative group">
-                          <img src={item.coverImage.extraLarge} alt="cover" className="w-full h-full object-cover opacity-50 group-hover:opacity-90 transition-opacity duration-700 sepia-[.3]" />
-                          <div className="absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t from-[#0C0E0C] via-[#0C0E0C]/60 to-transparent">
-                            <p className="text-[9px] font-bold uppercase tracking-wider line-clamp-2 leading-relaxed font-cinzel text-[#A08B63] text-center mb-2">{item.title.english || item.title.romaji}</p>
+                        <div key={item.id} className="aspect-[2/3] rounded-t-full overflow-hidden border border-[#F3E5AB]/20 bg-white/5 backdrop-blur-md relative group shadow-[0_0_15px_rgba(243,229,171,0.05)]">
+                          <img src={item.coverImage.extraLarge} alt="cover" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-700" />
+                          <div className="absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent">
+                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] line-clamp-2 leading-relaxed font-cinzel text-[#F3E5AB] text-center mb-2 drop-shadow-md">{item.title.english || item.title.romaji}</p>
                           </div>
                         </div>
                       ))
@@ -266,31 +291,31 @@ export default function App() {
               {/* STAGE: QUESTS */}
               {stage === 'quests' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-widest text-[#A08B63]/60 uppercase mb-6 hover:text-[#A08B63] transition-colors font-cinzel">
+                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-white/50 uppercase mb-6 hover:text-[#F3E5AB] transition-colors font-cinzel">
                     <ChevronLeft size={14} /> Return to Hall
                   </button>
 
                   <div className="space-y-4">
-                    <p className="text-[10px] tracking-[0.2em] text-[#A08B63]/50 uppercase mb-4 font-cinzel text-center border-b border-[#A08B63]/20 pb-2">Active Directives</p>
+                    <p className="text-[10px] tracking-[0.3em] text-white/50 uppercase mb-4 font-cinzel text-center border-b border-[#F3E5AB]/20 pb-3">Active Directives</p>
                     
                     {DAILY_QUESTS.map(quest => {
                       const isCompleted = profile.questsCompleted?.includes(quest.id);
                       return (
-                        <div key={quest.id} className={`p-5 border transition-all duration-500 ${isCompleted ? 'border-[#A08B63]/40 bg-[#A08B63]/10' : 'border-[#A08B63]/10 bg-[#333223]/20'}`}>
+                        <div key={quest.id} className={`p-5 border backdrop-blur-xl shadow-[0_0_20px_rgba(243,229,171,0.03)] transition-all duration-500 rounded-sm ${isCompleted ? 'border-[#E6C35C]/40 bg-[#E6C35C]/5' : 'border-[#F3E5AB]/20 bg-white/5'}`}>
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className={`text-xs tracking-widest uppercase font-cinzel ${isCompleted ? 'text-[#A08B63]' : 'text-[#A08B63]/80'}`}>{quest.title}</h4>
-                            <span className="text-[9px] font-mono bg-[#0C0E0C] border border-[#A08B63]/20 px-2 py-1 text-[#A08B63]">+{quest.xp} XP</span>
+                            <h4 className={`text-xs tracking-[0.2em] uppercase font-cinzel ${isCompleted ? 'text-[#E6C35C]' : 'text-[#F3E5AB]'}`}>{quest.title}</h4>
+                            <span className="text-[9px] font-inter bg-black/50 border border-[#F3E5AB]/20 px-2 py-1 text-[#E6C35C] rounded-sm">+{quest.xp} XP</span>
                           </div>
-                          <p className="text-[10px] text-[#A08B63]/60 tracking-wide mb-4">{quest.desc}</p>
+                          <p className="text-[10px] text-white/50 tracking-wide mb-5 font-inter leading-relaxed">{quest.desc}</p>
                           
                           {isCompleted ? (
-                            <div className="flex items-center gap-2 text-[10px] tracking-widest text-[#A08B63] uppercase font-cinzel">
+                            <div className="flex items-center gap-2 text-[10px] tracking-[0.3em] text-[#E6C35C] uppercase font-cinzel">
                               <CheckCircle2 size={14} /> Fulfilled
                             </div>
                           ) : (
                             <button 
                               onClick={() => handleQuestCompletion(quest.id, quest.xp)}
-                              className="w-full py-2 border border-[#A08B63]/20 text-[9px] tracking-[0.2em] uppercase hover:bg-[#A08B63]/10 transition-colors font-cinzel"
+                              className="w-full py-3 border border-[#F3E5AB]/20 text-[9px] tracking-[0.3em] uppercase hover:bg-[#F3E5AB]/10 hover:border-[#E6C35C]/50 transition-all font-cinzel text-[#F3E5AB]"
                             >
                               Claim Knowledge
                             </button>
