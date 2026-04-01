@@ -4,7 +4,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { 
   Library, Sparkles, Zap, Scroll, Layers, ChevronLeft, 
-  Target, ChevronRight, CheckCircle2, Star
+  Target, ChevronRight, CheckCircle2, Star, Flame
 } from 'lucide-react';
 
 // --- FIREBASE CONFIGURATION ---
@@ -26,10 +26,10 @@ const db = getFirestore(app);
 // --- RPG LOGIC & CONSTANTS ---
 const RANKS = [
   { id: 1, title: 'Wanderer', minXp: 0, color: 'text-slate-400', bar: 'bg-slate-400' },
-  { id: 2, title: 'Initiate', minXp: 100, color: 'text-emerald-400', bar: 'bg-emerald-400' },
-  { id: 3, title: 'Seeker', minXp: 500, color: 'text-blue-400', bar: 'bg-blue-400' },
-  { id: 4, title: 'Scholar', minXp: 1500, color: 'text-purple-400', bar: 'bg-purple-400' },
-  { id: 5, title: 'Arch-Librarian', minXp: 5000, color: 'text-amber-400', bar: 'bg-amber-400' }
+  { id: 2, title: 'Initiate', minXp: 100, color: 'text-emerald-600', bar: 'bg-emerald-600' },
+  { id: 3, title: 'Seeker', minXp: 500, color: 'text-blue-600', bar: 'bg-blue-600' },
+  { id: 4, title: 'Scholar', minXp: 1500, color: 'text-purple-600', bar: 'bg-purple-600' },
+  { id: 5, title: 'Arch-Librarian', minXp: 5000, color: 'text-[#A08B63]', bar: 'bg-[#A08B63]' }
 ];
 
 const DAILY_QUESTS = [
@@ -38,36 +38,21 @@ const DAILY_QUESTS = [
   { id: 'q3', title: 'Seeker of Truth', xp: 100, desc: 'Discover 3 new titles. (Claimable)' }
 ];
 
-// --- STARDUST COMPONENT ---
-const Stardust = () => {
-  const stars = Array.from({ length: 40 }).map((_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    animationDuration: `${Math.random() * 4 + 3}s`,
-    animationDelay: `${Math.random() * 5}s`,
-    size: `${Math.random() * 2 + 1}px`,
-    opacity: Math.random() * 0.5 + 0.2
-  }));
+// --- ATMOSPHERE COMPONENTS ---
+const Candlelight = () => (
+  <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden">
+    <div className="w-[150vw] h-[150vh] bg-[radial-gradient(circle_at_center,rgba(160,139,99,0.08)_0%,transparent_60%)] animate-flicker mix-blend-screen" />
+  </div>
+);
 
-  return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {stars.map(s => (
-        <div 
-          key={s.id} 
-          className="absolute bg-white rounded-full opacity-0 animate-stardust"
-          style={{ 
-            left: s.left, 
-            width: s.size, 
-            height: s.size, 
-            animationDuration: s.animationDuration, 
-            animationDelay: s.animationDelay,
-            boxShadow: `0 0 ${s.size}px rgba(255,255,255,${s.opacity})`
-          }} 
-        />
-      ))}
-    </div>
-  );
-};
+const CornerAccents = () => (
+  <div className="fixed inset-4 pointer-events-none z-20">
+    <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-[#A08B63]/40" />
+    <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-[#A08B63]/40" />
+    <div className="absolute bottom-0 left-0 w-8 h-8 border-b border-l border-[#A08B63]/40" />
+    <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-[#A08B63]/40" />
+  </div>
+);
 
 // --- MAIN APP COMPONENT ---
 export default function App() {
@@ -88,7 +73,6 @@ export default function App() {
           setProfile({ ...data, questsCompleted: data.questsCompleted || [] }); 
           setStage('hall'); 
           
-          // Auto-complete login quest if not done
           if (!data.questsCompleted?.includes('q2')) {
             handleQuestCompletion('q2', 20, data);
           }
@@ -98,9 +82,9 @@ export default function App() {
   }, []);
 
   const handleRitual = async () => {
-    const n = prompt("Enter your Name to bind your soul:");
+    const n = prompt("Inscribe your Name upon the parchment:");
     if (!n) return;
-    const p = { name: n, xp: 0, questsCompleted: ['q2'] }; // Auto-complete login quest
+    const p = { name: n, xp: 0, questsCompleted: ['q2'] }; 
     setProfile(p);
     setStage('hall');
     if (user) await setDoc(doc(db, 'aniomics_v1', 'users', user.uid, 'profile'), p);
@@ -125,7 +109,6 @@ export default function App() {
     setLoading(true);
     setStage('sanctuary');
     
-    // Trigger "Consult the Archives" quest
     handleQuestCompletion('q1', 50);
 
     const query = `query($t: MediaType){ Page(perPage: 10){ media(type: $t, sort: TRENDING_DESC){ id title { english romaji } coverImage { extraLarge } } } }`;
@@ -141,43 +124,54 @@ export default function App() {
     setLoading(false);
   };
 
-  // Calculate RPG Stats
   const currentRank = RANKS.slice().reverse().find(r => profile.xp >= r.minXp) || RANKS[0];
   const nextRank = RANKS.find(r => r.minXp > profile.xp) || currentRank;
   const xpProgress = nextRank.id === currentRank.id ? 100 : ((profile.xp - currentRank.minXp) / (nextRank.minXp - currentRank.minXp)) * 100;
 
   return (
-    <div className="h-screen w-full bg-[#050505] text-white overflow-hidden relative flex flex-col items-center justify-center font-sans">
+    <div className="h-screen w-full bg-[#0C0E0C] text-[#A08B63] overflow-hidden relative flex flex-col items-center justify-center font-['Inter',_sans-serif]">
       
-      {/* Injecting CSS for Stardust Animation */}
+      {/* Injecting Fonts & CSS Animations */}
       <style>{`
-        @keyframes stardust {
-          0% { transform: translateY(-10vh) translateX(0) scale(0.5); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateY(110vh) translateX(20px) scale(1.5); opacity: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
+        
+        @keyframes flicker {
+          0%, 100% { opacity: 0.8; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.02); }
+          25%, 75% { opacity: 0.7; transform: scale(0.98); }
         }
-        .animate-stardust { animation-name: stardust; animation-timing-function: linear; animation-iteration-count: infinite; }
+        .animate-flicker { animation: flicker 4s ease-in-out infinite alternate; }
+        
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      <Stardust />
+      <Candlelight />
+      <CornerAccents />
 
-      {/* Z-10 ensures content is above the stardust */}
       <div className="z-10 w-full h-full flex flex-col relative">
         {stage === 'entrance' ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-10">
-            <Library size={64} className="text-amber-600/40 mb-8 mx-auto animate-pulse" />
-            <h1 className="text-4xl tracking-[0.5em] font-light bg-clip-text text-transparent bg-gradient-to-b from-white to-white/30">ANIOMICS</h1>
-            <p className="text-[10px] tracking-widest text-white/30 mt-4 uppercase">The Grand Library</p>
-            <button onClick={handleRitual} className="mt-16 px-10 py-4 border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-colors rounded-full text-[10px] tracking-widest uppercase backdrop-blur-sm">
-              Enter Sanctuary
-            </button>
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+            {/* Sacred Archway Motif */}
+            <div className="border border-[#A08B63]/30 rounded-t-full pt-16 pb-10 px-8 flex flex-col items-center relative bg-gradient-to-b from-[#A08B63]/5 to-transparent shadow-[0_0_30px_rgba(160,139,99,0.05)]">
+              <Flame size={48} className="text-[#A08B63]/60 mb-6 animate-pulse" />
+              <h1 className="text-4xl tracking-[0.3em] font-cinzel font-semibold text-[#A08B63] drop-shadow-md">ANIOMICS</h1>
+              
+              <div className="w-[1px] h-16 bg-gradient-to-b from-[#A08B63]/50 to-transparent mx-auto my-6" />
+              
+              <p className="text-[10px] tracking-[0.2em] text-[#A08B63]/50 uppercase font-light mb-10">The Grand Library</p>
+              
+              <button onClick={handleRitual} className="px-8 py-3 border border-[#A08B63]/40 bg-[#A08B63]/10 hover:bg-[#A08B63]/20 transition-colors rounded-sm text-[10px] tracking-[0.2em] uppercase backdrop-blur-sm font-cinzel">
+                Initiate Ritual
+              </button>
+            </div>
           </div>
         ) : (
           <div className="w-full h-full flex flex-col p-6 pt-12">
             
             {/* RPG Header */}
-            <header className="mb-8">
+            <header className="mb-8 border-b border-[#A08B63]/20 pb-4">
               <div className="flex justify-between items-end mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -186,18 +180,18 @@ export default function App() {
                       {currentRank.title}
                     </p>
                   </div>
-                  <h2 className="text-lg tracking-widest uppercase font-light">{profile.name}</h2>
+                  <h2 className="text-xl tracking-widest uppercase font-cinzel text-[#A08B63]">{profile.name}</h2>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] tracking-widest text-white/40 uppercase mb-1">Experience</p>
-                  <p className="text-sm tracking-widest font-mono">{profile.xp} <span className="text-white/30 text-[10px]">/ {nextRank.minXp}</span></p>
+                  <p className="text-[9px] tracking-widest text-[#A08B63]/50 uppercase mb-1">Knowledge</p>
+                  <p className="text-sm tracking-widest font-cinzel">{profile.xp} <span className="text-[#A08B63]/40 text-[10px]">/ {nextRank.minXp}</span></p>
                 </div>
               </div>
               
               {/* XP Progress Bar */}
-              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+              <div className="h-[2px] w-full bg-[#333223] overflow-hidden">
                 <div 
-                  className={`h-full ${currentRank.bar} transition-all duration-1000 ease-out`} 
+                  className={`h-full ${currentRank.bar} transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(160,139,99,0.5)]`} 
                   style={{ width: `${xpProgress}%` }}
                 />
               </div>
@@ -208,35 +202,36 @@ export default function App() {
               
               {/* STAGE: HALL */}
               {stage === 'hall' && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <p className="text-[10px] tracking-widest text-white/30 uppercase mb-6">Select a Wing</p>
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <p className="text-[10px] tracking-[0.2em] text-[#A08B63]/50 uppercase text-center font-cinzel mb-4">Select a Chamber</p>
                   
-                  <div onClick={() => fetchData('ANIME')} className="h-36 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-900/20 to-transparent p-6 flex flex-col justify-end relative overflow-hidden backdrop-blur-md cursor-pointer">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-                    <Zap size={24} className="text-blue-400/60 mb-2" />
-                    <h3 className="text-xl tracking-widest uppercase font-light">Motion</h3>
-                    <p className="text-[9px] tracking-widest text-white/40 uppercase mt-1">Anime Archives</p>
-                  </div>
-                  
-                  <div onClick={() => fetchData('MANGA')} className="h-36 rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-900/20 to-transparent p-6 flex flex-col justify-end relative overflow-hidden backdrop-blur-md cursor-pointer">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-                    <Scroll size={24} className="text-orange-400/60 mb-2" />
-                    <h3 className="text-xl tracking-widest uppercase font-light">Ink</h3>
-                    <p className="text-[9px] tracking-widest text-white/40 uppercase mt-1">Manga Archives</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Motion Chamber */}
+                    <div onClick={() => fetchData('ANIME')} className="h-56 rounded-t-full border border-[#A08B63]/30 bg-gradient-to-br from-[#2A3A2F] to-transparent p-4 flex flex-col items-center justify-end relative overflow-hidden backdrop-blur-md cursor-pointer group hover:border-[#A08B63]/60 transition-all">
+                      <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#A08B63]/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                      <Zap size={24} className="text-[#A08B63]/60 mb-4" />
+                      <h3 className="text-lg tracking-widest uppercase font-cinzel mb-1">Motion</h3>
+                      <p className="text-[8px] tracking-widest text-[#A08B63]/50 uppercase mb-4">Anime Archives</p>
+                    </div>
+                    
+                    {/* Ink Chamber */}
+                    <div onClick={() => fetchData('MANGA')} className="h-56 rounded-t-full border border-[#A08B63]/30 bg-gradient-to-br from-[#333223] to-transparent p-4 flex flex-col items-center justify-end relative overflow-hidden backdrop-blur-md cursor-pointer group hover:border-[#A08B63]/60 transition-all">
+                      <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#A08B63]/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                      <Scroll size={24} className="text-[#A08B63]/60 mb-4" />
+                      <h3 className="text-lg tracking-widest uppercase font-cinzel mb-1">Ink</h3>
+                      <p className="text-[8px] tracking-widest text-[#A08B63]/50 uppercase mb-4">Manga Archives</p>
+                    </div>
                   </div>
 
                   {/* Quests Entry */}
-                  <div onClick={() => setStage('quests')} className="mt-8 h-20 rounded-2xl border border-purple-500/20 bg-purple-900/10 p-5 flex items-center justify-between backdrop-blur-md cursor-pointer">
+                  <div onClick={() => setStage('quests')} className="mt-6 h-16 border-y border-[#A08B63]/20 bg-[#A08B63]/5 px-4 flex items-center justify-between backdrop-blur-md cursor-pointer hover:bg-[#A08B63]/10 transition-colors">
                     <div className="flex items-center gap-4">
-                      <div className="p-2 bg-purple-500/10 rounded-full">
-                        <Target size={18} className="text-purple-400" />
-                      </div>
+                      <Target size={16} className="text-[#A08B63]/70" />
                       <div>
-                        <h3 className="text-xs tracking-widest uppercase">Daily Quests</h3>
-                        <p className="text-[9px] tracking-widest text-white/40 uppercase mt-1">Earn Experience</p>
+                        <h3 className="text-xs tracking-widest uppercase font-cinzel">Sacred Directives</h3>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-white/30" />
+                    <ChevronRight size={16} className="text-[#A08B63]/40" />
                   </div>
                 </div>
               )}
@@ -244,22 +239,22 @@ export default function App() {
               {/* STAGE: SANCTUARY (Library View) */}
               {stage === 'sanctuary' && (
                 <div className="animate-in fade-in duration-500">
-                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-widest text-white/50 uppercase mb-6 hover:text-white transition-colors">
-                    <ChevronLeft size={14} /> Return to Hall
+                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-widest text-[#A08B63]/60 uppercase mb-6 hover:text-[#A08B63] transition-colors font-cinzel">
+                    <ChevronLeft size={14} /> Depart Chamber
                   </button>
                   
                   <div className="grid grid-cols-2 gap-4">
                     {loading ? (
-                      <div className="col-span-2 flex flex-col items-center justify-center py-20 opacity-50">
-                        <Sparkles className="animate-spin mb-4 text-amber-500/50" />
-                        <p className="text-[10px] tracking-widest uppercase">Consulting Archives...</p>
+                      <div className="col-span-2 flex flex-col items-center justify-center py-20 opacity-70">
+                        <Flame className="animate-pulse mb-4 text-[#A08B63]" size={32} />
+                        <p className="text-[10px] tracking-[0.2em] uppercase font-cinzel">Consulting Tomes...</p>
                       </div>
                     ) : (
                       data.map(item => (
-                        <div key={item.id} className="aspect-[2/3] rounded-xl overflow-hidden border border-white/10 bg-white/5 relative group">
-                          <img src={item.coverImage.extraLarge} alt="cover" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
-                          <div className="absolute inset-0 p-3 flex flex-col justify-end bg-gradient-to-t from-black via-black/50 to-transparent">
-                            <p className="text-[9px] font-bold uppercase tracking-wider line-clamp-2 leading-relaxed">{item.title.english || item.title.romaji}</p>
+                        <div key={item.id} className="aspect-[2/3] rounded-t-full overflow-hidden border border-[#A08B63]/20 bg-[#333223]/30 relative group">
+                          <img src={item.coverImage.extraLarge} alt="cover" className="w-full h-full object-cover opacity-50 group-hover:opacity-90 transition-opacity duration-700 sepia-[.3]" />
+                          <div className="absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t from-[#0C0E0C] via-[#0C0E0C]/60 to-transparent">
+                            <p className="text-[9px] font-bold uppercase tracking-wider line-clamp-2 leading-relaxed font-cinzel text-[#A08B63] text-center mb-2">{item.title.english || item.title.romaji}</p>
                           </div>
                         </div>
                       ))
@@ -271,33 +266,33 @@ export default function App() {
               {/* STAGE: QUESTS */}
               {stage === 'quests' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-widest text-white/50 uppercase mb-6 hover:text-white transition-colors">
+                  <button onClick={() => setStage('hall')} className="flex items-center gap-2 text-[10px] tracking-widest text-[#A08B63]/60 uppercase mb-6 hover:text-[#A08B63] transition-colors font-cinzel">
                     <ChevronLeft size={14} /> Return to Hall
                   </button>
 
                   <div className="space-y-4">
-                    <p className="text-[10px] tracking-widest text-white/30 uppercase mb-2">Active Directives</p>
+                    <p className="text-[10px] tracking-[0.2em] text-[#A08B63]/50 uppercase mb-4 font-cinzel text-center border-b border-[#A08B63]/20 pb-2">Active Directives</p>
                     
                     {DAILY_QUESTS.map(quest => {
                       const isCompleted = profile.questsCompleted?.includes(quest.id);
                       return (
-                        <div key={quest.id} className={`p-5 rounded-2xl border transition-all duration-500 ${isCompleted ? 'border-emerald-500/20 bg-emerald-900/10' : 'border-white/10 bg-white/5'}`}>
+                        <div key={quest.id} className={`p-5 border transition-all duration-500 ${isCompleted ? 'border-[#A08B63]/40 bg-[#A08B63]/10' : 'border-[#A08B63]/10 bg-[#333223]/20'}`}>
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className={`text-xs tracking-widest uppercase ${isCompleted ? 'text-emerald-400' : 'text-white'}`}>{quest.title}</h4>
-                            <span className="text-[9px] font-mono bg-white/10 px-2 py-1 rounded text-amber-400">+{quest.xp} XP</span>
+                            <h4 className={`text-xs tracking-widest uppercase font-cinzel ${isCompleted ? 'text-[#A08B63]' : 'text-[#A08B63]/80'}`}>{quest.title}</h4>
+                            <span className="text-[9px] font-mono bg-[#0C0E0C] border border-[#A08B63]/20 px-2 py-1 text-[#A08B63]">+{quest.xp} XP</span>
                           </div>
-                          <p className="text-[10px] text-white/40 tracking-wide mb-4">{quest.desc}</p>
+                          <p className="text-[10px] text-[#A08B63]/60 tracking-wide mb-4">{quest.desc}</p>
                           
                           {isCompleted ? (
-                            <div className="flex items-center gap-2 text-[10px] tracking-widest text-emerald-500/80 uppercase">
-                              <CheckCircle2 size={14} /> Completed
+                            <div className="flex items-center gap-2 text-[10px] tracking-widest text-[#A08B63] uppercase font-cinzel">
+                              <CheckCircle2 size={14} /> Fulfilled
                             </div>
                           ) : (
                             <button 
                               onClick={() => handleQuestCompletion(quest.id, quest.xp)}
-                              className="w-full py-2 border border-white/10 rounded-lg text-[9px] tracking-widest uppercase hover:bg-white/10 transition-colors"
+                              className="w-full py-2 border border-[#A08B63]/20 text-[9px] tracking-[0.2em] uppercase hover:bg-[#A08B63]/10 transition-colors font-cinzel"
                             >
-                              Claim (Debug)
+                              Claim Knowledge
                             </button>
                           )}
                         </div>
@@ -313,4 +308,4 @@ export default function App() {
       </div>
     </div>
   );
-      }
+}
