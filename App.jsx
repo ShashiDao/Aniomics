@@ -244,7 +244,7 @@ export default function App() {
                       <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#F3E5AB]/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
                       <Scroll size={24} className="text-[#E6C35C] mb-4 drop-shadow-[0_0_10px_rgba(230,195,92,0.5)]" />
                       <h3 className="text-lg tracking-[0.3em] uppercase font-cinzel mb-2 text-[#F3E5AB]">Ink</h3>
-                      <p className="text-[9px] tracking-[0.2em] text-white/50 uppercase mb-4 font-inter">Manga Archives</p>
+                      <p className="text-[9px] tracking-[0.2em] text-white/50 uppercase mb-4 font-inter">Comic Archives</p>
                     </div>
                   </div>
 
