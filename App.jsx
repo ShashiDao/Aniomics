@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
@@ -6,7 +6,7 @@ import {
   Library, Sparkles, Zap, Scroll, ChevronLeft, 
   Target, ChevronRight, CheckCircle2, Star,
   Moon, Sun, Home, Search as SearchIcon, MessageSquare, BookMarked,
-  Filter, ArrowUpDown, X, Wand2
+  ArrowUpDown, X, Wand2, Menu, Gamepad2, Trophy, Wallet, Gift, Settings
 } from 'lucide-react';
 
 // --- FIREBASE CONFIG ---
@@ -39,8 +39,6 @@ const DAILY_QUESTS = [
   { id: 'q3', title: 'Seeker of Truth', xp: 100, desc: 'Discover 3 new titles.' }
 ];
 
-// --- COMPONENTS ---
-
 const Typewriter = ({ text, speed = 40 }) => {
   const [displayedText, setDisplayedText] = useState("");
   useEffect(() => {
@@ -69,16 +67,8 @@ const Stardust = ({ color }) => {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {stars.map(s => (
-        <div 
-          key={s.id} 
-          className="absolute rounded-full opacity-0 animate-stardust transition-colors duration-1000"
-          style={{ 
-            backgroundColor: color,
-            left: s.left, width: s.size, height: s.size,
-            animationDuration: s.duration, animationDelay: s.delay,
-            boxShadow: `0 0 5px ${color}`
-          }} 
-        />
+        <div key={s.id} className="absolute rounded-full opacity-0 animate-stardust transition-colors duration-1000"
+          style={{ backgroundColor: color, left: s.left, width: s.size, height: s.size, animationDuration: s.duration, animationDelay: s.delay, boxShadow: `0 0 5px ${color}` }} />
       ))}
     </div>
   );
@@ -93,6 +83,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [chamberType, setChamberType] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilter, setSearchFilter] = useState("ANIME");
@@ -106,7 +97,7 @@ export default function App() {
     bg: isNight ? 'bg-[#050505]' : 'bg-[#F3E5AB]',
     text: isNight ? 'text-[#F3E5AB]' : 'text-[#402615]',
     subText: isNight ? 'text-white/50' : 'text-black/40',
-    glass: isNight ? 'bg-white/5 border-[#F3E5AB]/20 shadow-[0_0_30px_rgba(243,229,171,0.05)]' : 'bg-black/5 border-[#402615]/20 shadow-[0_0_30px_rgba(64,38,21,0.05)]',
+    glass: isNight ? 'bg-white/5 border-[#F3E5AB]/20 shadow-2xl' : 'bg-black/5 border-[#402615]/20 shadow-2xl',
     accent: isNight ? 'text-[#E6C35C]' : 'text-[#8B5E3C]',
     particle: isNight ? '#F3E5AB' : '#8B5E3C'
   };
@@ -163,30 +154,12 @@ export default function App() {
     setLoading(false);
   };
 
-  // LIBRARIAN INTELLIGENCE
   const toggleLibrarian = () => {
     if (!libOpen) {
       const dialogues = {
-        hall: [
-          `Archon ${profile.name}, the chambers of Motion and Ink are humming tonight.`,
-          "I see your knowledge has reached rank " + currentRank.title + ".",
-          "The archives are vast, but the stardust guides your intuition."
-        ],
-        search: [
-          "Querying the void? Be specific with your summons.",
-          "Even the most obscure scrolls can be found if you know the name.",
-          "AniList archives are responding to your frequency."
-        ],
-        forum: [
-          "Community whispers are louder today. Any new lore?",
-          "The seekers are active. Knowledge shared is knowledge multiplied.",
-          "I suggest reading Scroll #2. It has... interesting theories."
-        ],
-        sanctum: [
-          profile.xp < 100 ? "Your sanctum is quiet, Wanderer. Find something to bind." : "Your collection grows. I've polished the shelves for you.",
-          "Only your most precious scrolls belong in this inner sanctuary.",
-          "A bound scroll is a memory immortalized."
-        ]
+        hall: [`Archon ${profile.name}, Motion and Ink await.`, "The archives are perfectly aligned.", "Rank " + currentRank.title + " suits you."],
+        search: ["Seek and you shall find.", "The void rewards the precise."],
+        sanctum: ["Your bound collection is secure.", "Peace resides in the inner sanctum."]
       };
       const pool = dialogues[activeTab] || dialogues.hall;
       setLibMsg(pool[Math.floor(Math.random() * pool.length)]);
@@ -194,36 +167,21 @@ export default function App() {
     setLibOpen(!libOpen);
   };
 
-  const NavItem = ({ id, icon: Icon, label }) => (
-    <button 
-      onClick={() => { setActiveTab(id); setChamberType(null); setLibOpen(false); }}
-      className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 ${activeTab === id ? 'opacity-100 scale-110 text-[#E6C35C]' : 'opacity-40 hover:opacity-70'}`}
-    >
-      <Icon size={20} />
-      <span className="text-[8px] tracking-[0.2em] uppercase font-serif font-bold">{label}</span>
-    </button>
+  const MenuIcon = ({ icon: Icon, label, onClick }) => (
+    <div onClick={onClick} className={`flex flex-col items-center justify-center gap-3 p-4 border rounded-2xl transition-all active:scale-90 cursor-pointer ${theme.glass}`}>
+      <Icon size={24} className={theme.accent} />
+      <span className="text-[8px] tracking-widest uppercase font-serif font-bold text-center">{label}</span>
+    </div>
   );
 
   return (
     <div className={`h-screen w-full ${theme.bg} ${theme.text} transition-colors duration-1000 overflow-hidden relative flex flex-col items-center font-sans`}>
-      
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
-        @keyframes stardust {
-          0% { transform: translateY(-10vh) translateX(0); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(110vh) translateX(20px); opacity: 0; }
-        }
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes breathe {
-          0%, 100% { transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 5px rgba(230, 195, 92, 0.3)); }
-          50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px rgba(230, 195, 92, 0.6)); }
-        }
-        .animate-stardust { animation-name: stardust; animation-timing-function: linear; animation-iteration-count: infinite; }
+        @keyframes stardust { 0% { transform: translateY(-10vh); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(110vh); opacity: 0; } }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.08); opacity: 1; } }
+        .animate-stardust { animation: stardust linear infinite; }
         .animate-spin-slow { animation: spin-slow 12s linear infinite; }
         .animate-breathe { animation: breathe 4s ease-in-out infinite; }
         .font-cinzel { font-family: 'Cinzel', serif; }
@@ -232,29 +190,52 @@ export default function App() {
       
       <Stardust color={theme.particle} />
 
-      {/* PHASE TOGGLE */}
-      <button 
-        onClick={() => setPhase(isNight ? 'day' : 'night')}
-        className={`fixed top-6 right-6 z-[60] p-3 rounded-full border backdrop-blur-xl transition-all duration-700 active:scale-90 ${theme.glass} shadow-lg`}
-      >
-        {isNight ? <Moon size={18} className="animate-pulse" /> : <Sun size={18} className="animate-spin-slow" />}
-      </button>
+      {/* TOP SYSTEM BAR */}
+      <div className="fixed top-6 left-6 z-[60] flex items-center gap-3">
+        <button onClick={() => setIsMenuOpen(true)} className={`p-3 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-lg`}>
+          <Menu size={20} />
+        </button>
+        <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm opacity-80`}>
+          {isNight ? <Moon size={14} className="animate-pulse" /> : <Sun size={14} className="animate-spin-slow" />}
+        </button>
+      </div>
 
-      {/* LIBRARIAN (THE ARCHIVIST) */}
-      {stage === 'active' && (
+      {/* ARCHON'S DRAWER */}
+      {isMenuOpen && (
+        <div className={`fixed inset-0 z-[200] backdrop-blur-3xl animate-in fade-in zoom-in duration-300 flex flex-col p-8 ${isNight ? 'bg-black/90' : 'bg-[#F3E5AB]/95'}`}>
+          <div className="flex justify-between items-center mb-10">
+            <h2 className="text-2xl font-serif tracking-widest uppercase">Archon's Tools</h2>
+            <button onClick={() => setIsMenuOpen(false)} className="p-2 opacity-50"><X size={28} /></button>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3 mb-8">
+            <MenuIcon icon={Gamepad2} label="Trials" />
+            <MenuIcon icon={Target} label="Directives" onClick={() => { setStage('quests'); setIsMenuOpen(false); }} />
+            <MenuIcon icon={Trophy} label="Rankings" />
+            <MenuIcon icon={Wallet} label="Essence" />
+            <MenuIcon icon={Gift} label="Runes" />
+            <MenuIcon icon={Settings} label="Sanctuary" />
+          </div>
+
+          <div className={`mt-auto p-5 border rounded-2xl ${theme.glass} flex items-center gap-4`}>
+             <Star size={20} className={theme.accent} />
+             <div>
+               <p className="text-[8px] tracking-widest uppercase opacity-40">Current Patron</p>
+               <p className="text-md font-serif tracking-widest">{profile.name}</p>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* THE ARCHIVIST (LIBRARIAN) */}
+      {stage === 'active' && !isMenuOpen && (
         <div className="fixed bottom-28 left-6 z-[100] flex items-end gap-3 pointer-events-none">
-          <button 
-            onClick={toggleLibrarian}
-            className={`pointer-events-auto p-4 rounded-full border backdrop-blur-3xl shadow-2xl transition-all active:scale-90 animate-breathe ${theme.glass} ${libOpen ? 'border-[#E6C35C]' : ''}`}
-          >
-            <Wand2 size={24} className={libOpen ? 'text-[#E6C35C]' : 'opacity-60 text-current'} />
+          <button onClick={toggleLibrarian} className={`pointer-events-auto p-4 rounded-full border backdrop-blur-3xl animate-breathe ${theme.glass} ${libOpen ? 'border-[#E6C35C]' : ''}`}>
+            <Wand2 size={22} className={libOpen ? 'text-[#E6C35C]' : 'opacity-60'} />
           </button>
           {libOpen && (
-            <div className={`pointer-events-auto p-5 rounded-2xl border backdrop-blur-3xl max-w-[200px] animate-in slide-in-from-left-4 fade-in duration-500 mb-2 ${theme.glass}`}>
-              <div className="absolute -left-2 bottom-6 w-4 h-4 rotate-45 border-l border-b border-inherit bg-inherit" />
-              <p className="text-[10px] font-serif tracking-widest leading-relaxed text-current italic font-medium">
-                <Typewriter text={libMsg} />
-              </p>
+            <div className={`pointer-events-auto p-4 rounded-2xl border backdrop-blur-3xl max-w-[180px] animate-in slide-in-from-left-4 fade-in duration-500 mb-2 ${theme.glass}`}>
+              <p className="text-[10px] font-serif tracking-widest leading-relaxed italic"><Typewriter text={libMsg} /></p>
             </div>
           )}
         </div>
@@ -262,29 +243,28 @@ export default function App() {
 
       <div className="z-10 w-full h-full max-w-lg flex flex-col relative pb-24">
         {stage === 'entrance' ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 animate-in fade-in duration-1000">
-            <div className={`border rounded-t-full pt-20 pb-12 px-10 backdrop-blur-xl transition-all duration-1000 ${theme.glass}`}>
+          <div className="flex-1 flex flex-col items-center justify-center p-6 animate-in fade-in duration-1000">
+            <div className={`border rounded-t-full pt-20 pb-12 px-10 backdrop-blur-xl ${theme.glass} text-center`}>
               <Library size={56} className="text-[#E6C35C] mb-6 mx-auto" />
               <h1 className="text-4xl tracking-[0.3em] font-serif font-semibold">ANIOMICS</h1>
               <p className="text-[10px] tracking-[0.4em] uppercase opacity-40 mt-6 mb-12">The Grand Library</p>
-              <button onClick={handleRitual} className={`px-8 py-4 border rounded-sm text-[10px] tracking-[0.3em] uppercase font-serif hover:bg-[#E6C35C] hover:text-[#050505] transition-all`}>Initiate Ritual</button>
+              <button onClick={handleRitual} className={`px-8 py-4 border rounded-sm text-[10px] tracking-widest uppercase font-serif hover:bg-[#E6C35C] hover:text-[#050505] transition-all`}>Initiate Ritual</button>
             </div>
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col p-6 pt-12 animate-in fade-in duration-700 overflow-hidden">
-            
-            <header className="mb-6 flex-shrink-0">
+          <div className="w-full h-full flex flex-col p-6 pt-16 animate-in fade-in duration-700 overflow-hidden">
+            <header className="mb-6">
               <div className="flex justify-between items-end mb-4 font-serif">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Star size={10} className={currentRank.color} />
-                    <span className={`text-[9px] tracking-widest uppercase font-bold ${currentRank.color}`}>{currentRank.title}</span>
+                    <span className={`text-[9px] tracking-widest font-bold uppercase ${currentRank.color}`}>{currentRank.title}</span>
                   </div>
                   <h2 className="text-xl tracking-widest uppercase">{profile.name}</h2>
                 </div>
                 <div className="text-right">
                   <p className="text-[8px] tracking-widest uppercase opacity-40 mb-1">Knowledge</p>
-                  <p className="text-sm text-[#E6C35C] font-serif">{profile.xp} <span className="opacity-30 text-[10px]">/ {nextRank.minXp}</span></p>
+                  <p className="text-sm text-[#E6C35C]">{profile.xp} <span className="opacity-30 text-[10px]">/ {nextRank.minXp}</span></p>
                 </div>
               </div>
               <div className="h-[2px] w-full bg-current/10 rounded-full overflow-hidden">
@@ -292,157 +272,111 @@ export default function App() {
               </div>
             </header>
 
-            <main className="flex-1 overflow-y-auto hide-scrollbar">
-              
+            <main className="flex-1 overflow-y-auto hide-scrollbar pb-10">
               {activeTab === 'hall' && !chamberType && (
-                <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                  <p className="text-[9px] tracking-widest uppercase text-center opacity-40 font-serif mb-4">Select a Chamber</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div onClick={() => { setChamberType("ANIME"); setSearchFilter("ANIME"); executeSearch("ANIME"); }} className={`h-52 rounded-t-full border p-4 flex flex-col items-center justify-end cursor-pointer group transition-all hover:scale-[1.02] ${theme.glass}`}>
-                      <Zap size={24} className="text-[#E6C35C] mb-4" />
-                      <h3 className="text-lg tracking-widest font-serif uppercase">Motion</h3>
-                      <p className="text-[8px] opacity-40 tracking-widest uppercase">Anime Archives</p>
-                    </div>
-                    <div onClick={() => { setChamberType("MANGA"); setSearchFilter("MANGA"); executeSearch("MANGA"); }} className={`h-52 rounded-t-full border p-4 flex flex-col items-center justify-end cursor-pointer group transition-all hover:scale-[1.02] ${theme.glass}`}>
-                      <Scroll size={24} className="text-[#E6C35C] mb-4" />
-                      <h3 className="text-lg tracking-widest font-serif uppercase">Ink</h3>
-                      <p className="text-[8px] opacity-40 tracking-widest uppercase">Comic Archives</p>
-                    </div>
+                <div className="grid grid-cols-2 gap-4 pt-4 animate-in slide-in-from-bottom-4 duration-500">
+                  <div onClick={() => { setChamberType("ANIME"); setSearchFilter("ANIME"); executeSearch("ANIME"); }} className={`h-64 rounded-t-full border p-6 flex flex-col items-center justify-end cursor-pointer transition-all hover:scale-[1.02] ${theme.glass}`}>
+                    <Zap size={28} className="text-[#E6C35C] mb-4" />
+                    <h3 className="text-xl tracking-widest font-serif uppercase">Motion</h3>
+                    <p className="text-[9px] opacity-40 tracking-widest uppercase">Anime Archives</p>
                   </div>
-                  <div onClick={() => setStage('quests')} className={`h-16 border px-5 flex items-center justify-between rounded-sm cursor-pointer ${theme.glass}`}>
-                    <div className="flex items-center gap-4">
-                      <Target size={18} className="text-[#E6C35C]" />
-                      <h3 className="text-xs tracking-widest font-serif uppercase">Sacred Directives</h3>
-                    </div>
-                    <ChevronRight size={16} className="opacity-20" />
+                  <div onClick={() => { setChamberType("MANGA"); setSearchFilter("MANGA"); executeSearch("MANGA"); }} className={`h-64 rounded-t-full border p-6 flex flex-col items-center justify-end cursor-pointer transition-all hover:scale-[1.02] ${theme.glass}`}>
+                    <Scroll size={28} className="text-[#E6C35C] mb-4" />
+                    <h3 className="text-xl tracking-widest font-serif uppercase">Ink</h3>
+                    <p className="text-[9px] opacity-40 tracking-widest uppercase">Comic Archives</p>
                   </div>
                 </div>
               )}
 
               {chamberType && (
                 <div className="animate-in fade-in duration-500 pb-10">
-                  <button onClick={() => setChamberType(null)} className="flex items-center gap-2 text-[9px] tracking-widest opacity-40 mb-6 font-serif uppercase hover:opacity-100 transition-opacity">
+                  <button onClick={() => setChamberType(null)} className="flex items-center gap-2 text-[9px] tracking-widest opacity-40 mb-6 font-serif uppercase">
                     <ChevronLeft size={14} /> Back to Hall
                   </button>
                   <div className="grid grid-cols-2 gap-4">
-                    {loading ? (
-                      <div className="col-span-2 flex flex-col items-center justify-center py-20 opacity-30 gap-4">
-                        <Sparkles className="animate-pulse" size={32} />
-                        <p className="text-[9px] tracking-widest font-serif uppercase">Reading scrolls...</p>
-                      </div>
-                    ) : (
+                    {loading ? <Sparkles className="animate-pulse mx-auto col-span-2 py-20" /> : 
                       data.map(item => (
                         <div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative group ${theme.glass}`}>
-                          <img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700" alt="c" />
-                          <div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-[#050505]' : 'from-[#F3E5AB]'} via-transparent to-transparent`}>
-                            <p className="text-[9px] font-bold tracking-widest text-center font-serif uppercase leading-tight line-clamp-2">{item.title.english || item.title.romaji}</p>
+                          <img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" alt="c" />
+                          <div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#F3E5AB]'} to-transparent`}>
+                            <p className="text-[9px] font-bold tracking-widest text-center font-serif uppercase line-clamp-2 leading-tight">{item.title.english || item.title.romaji}</p>
                           </div>
                         </div>
-                      ))
-                    )}
+                    ))}
                   </div>
                 </div>
               )}
 
               {activeTab === 'search' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col gap-4">
-                  <div className={`flex items-center gap-3 p-3 border rounded-xl ${theme.glass}`}>
+                  <div className={`flex items-center gap-3 p-4 border rounded-2xl ${theme.glass}`}>
                     <SearchIcon size={16} className="opacity-30" />
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executeSearch()} placeholder="QUERY THE VOID..." className="bg-transparent border-none outline-none flex-1 text-[10px] tracking-widest uppercase font-serif placeholder:opacity-20" />
-                    {searchQuery && <X size={14} className="opacity-30" onClick={() => setSearchQuery("")} />}
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executeSearch()} placeholder="SEARCH THE VOID..." className="bg-transparent border-none outline-none flex-1 text-[10px] tracking-widest uppercase font-serif placeholder:opacity-10" />
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <div className={`flex flex-1 rounded-lg border p-1 ${theme.glass}`}>
-                      <button onClick={() => setSearchFilter("ANIME")} className={`flex-1 py-1.5 text-[8px] uppercase tracking-widest rounded-md transition-all ${searchFilter === 'ANIME' ? 'bg-[#E6C35C] text-black font-bold' : 'opacity-40'}`}>Motion</button>
-                      <button onClick={() => setSearchFilter("MANGA")} className={`flex-1 py-1.5 text-[8px] uppercase tracking-widest rounded-md transition-all ${searchFilter === 'MANGA' ? 'bg-[#E6C35C] text-black font-bold' : 'opacity-40'}`}>Ink</button>
-                    </div>
-                    <button onClick={() => setSearchSort(searchSort === 'TRENDING_DESC' ? 'POPULARITY_DESC' : 'TRENDING_DESC')} className={`p-2 px-3 border rounded-lg ${theme.glass} flex items-center gap-2 text-[8px] uppercase tracking-widest transition-all ${searchSort === 'POPULARITY_DESC' ? 'text-[#E6C35C]' : 'opacity-40'}`}>
-                      <ArrowUpDown size={12} /> {searchSort === 'TRENDING_DESC' ? 'Trend' : 'Pop'}
-                    </button>
-                    <button onClick={() => executeSearch()} className={`p-2 px-4 border rounded-lg ${theme.glass} text-[#E6C35C] active:scale-95 transition-all`}><SearchIcon size={12} /></button>
+                  <div className={`flex rounded-xl border p-1 ${theme.glass}`}>
+                    <button onClick={() => setSearchFilter("ANIME")} className={`flex-1 py-2 text-[8px] uppercase tracking-widest rounded-lg ${searchFilter === 'ANIME' ? 'bg-[#E6C35C] text-black font-bold' : 'opacity-40'}`}>Motion</button>
+                    <button onClick={() => setSearchFilter("MANGA")} className={`flex-1 py-2 text-[8px] uppercase tracking-widest rounded-lg ${searchFilter === 'MANGA' ? 'bg-[#E6C35C] text-black font-bold' : 'opacity-40'}`}>Ink</button>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    {loading ? (
-                      <div className="col-span-2 py-20 flex justify-center opacity-20"><Sparkles className="animate-spin" /></div>
-                    ) : (
-                      data.length > 0 ? data.map(item => (
-                        <div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative group ${theme.glass} animate-in fade-in duration-300`}>
-                          <img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" alt="s" />
-                          <div className={`absolute inset-0 p-3 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#F3E5AB]'} to-transparent`}>
-                            <p className="text-[8px] font-bold tracking-widest text-center font-serif uppercase line-clamp-1">{item.title.english || item.title.romaji}</p>
-                          </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {data.map(item => (
+                      <div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative ${theme.glass}`}>
+                        <img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" alt="s" />
+                        <div className={`absolute inset-0 p-3 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#F3E5AB]'} to-transparent`}>
+                          <p className="text-[8px] font-bold tracking-widest text-center uppercase line-clamp-1">{item.title.english || item.title.romaji}</p>
                         </div>
-                      )) : (
-                        <div className="col-span-2 py-20 text-center opacity-20 italic font-serif uppercase text-[9px] tracking-widest">Type to summon scroll results</div>
-                      )
-                    )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {activeTab === 'forum' && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4">
-                  <p className="text-[9px] tracking-widest uppercase text-center opacity-40 font-serif mb-6 border-b border-current/10 pb-4">Community Lore</p>
-                  {[1, 2].map(i => (
-                    <div key={i} className={`p-5 border rounded-sm ${theme.glass} space-y-2`}>
-                      <h4 className="text-[10px] font-serif tracking-widest uppercase mb-1">Scroll of Thought #{i}</h4>
-                      <p className="text-[9px] opacity-50 font-inter leading-relaxed italic">"The Archivist speaks of a hidden chamber beneath the stardust..."</p>
-                    </div>
-                  ))}
+                <div className="py-20 text-center opacity-20 italic animate-in fade-in">
+                  <MessageSquare size={40} className="mx-auto mb-4" />
+                  <p className="text-[9px] tracking-widest uppercase">The community hall is currently silent</p>
                 </div>
               )}
 
               {activeTab === 'sanctum' && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col gap-6">
-                  <div className="text-center space-y-2 border-b border-current/10 pb-6 mb-4">
-                    <h3 className="text-lg font-serif tracking-widest uppercase">The Sanctum</h3>
-                    <p className="text-[9px] tracking-widest opacity-40 uppercase font-serif">Bound scrolls</p>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-20 text-center gap-4 italic">
-                    <BookMarked size={40} />
-                    <p className="text-[9px] tracking-[0.3em] font-serif uppercase">Your collection awaits its first binding</p>
-                  </div>
+                <div className="py-20 text-center opacity-20 italic animate-in fade-in">
+                  <BookMarked size={40} className="mx-auto mb-4" />
+                  <p className="text-[9px] tracking-widest uppercase">Your inner sanctum awaits its first scroll</p>
                 </div>
               )}
 
+              {/* OVERLAY: QUESTS (VIA DRAWER) */}
               {stage === 'quests' && (
-                <div className="fixed inset-0 z-[110] h-screen w-full flex flex-col p-6 pt-12 animate-in fade-in duration-500" style={{ backgroundColor: isNight ? '#050505' : '#F3E5AB' }}>
-                   <button onClick={() => setStage('active')} className={`flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase mb-6 hover:opacity-70 transition-colors font-cinzel ${theme.subText}`}>
-                    <ChevronLeft size={14} /> Return to Hall
-                  </button>
-                  <div className="space-y-4 max-w-lg mx-auto w-full">
-                    <p className={`text-[10px] tracking-[0.3em] uppercase font-cinzel text-center border-b pb-3 border-current/10 mb-4 ${theme.subText}`}>Active Directives</p>
-                    {DAILY_QUESTS.map(quest => {
-                      const isCompleted = profile.questsCompleted?.includes(quest.id);
-                      return (
-                        <div key={quest.id} className={`p-5 border transition-all duration-500 rounded-sm ${theme.glass} ${isCompleted ? 'border-current/40' : ''}`}>
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className={`text-xs tracking-[0.2em] uppercase font-cinzel ${isCompleted ? 'opacity-40' : ''}`}>{quest.title}</h4>
-                            <span className={`text-[9px] font-inter border px-2 py-1 ${theme.accent} border-current/20 rounded-sm`}>+{quest.xp} XP</span>
-                          </div>
-                          <p className={`text-[10px] tracking-wide mb-5 font-inter leading-relaxed ${theme.subText}`}>{quest.desc}</p>
-                          {isCompleted ? (
-                            <div className={`flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase font-cinzel ${theme.accent}`}><CheckCircle2 size={14} /> Fulfilled</div>
-                          ) : (
-                            <button onClick={() => handleQuestCompletion(quest.id, quest.xp)} className="w-full py-3 border border-current/20 text-[9px] tracking-[0.3em] uppercase hover:bg-current/5 transition-all font-cinzel">Claim Knowledge</button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                <div className="fixed inset-0 z-[150] flex flex-col p-8 pt-12 animate-in fade-in" style={{ backgroundColor: isNight ? '#050505' : '#F3E5AB' }}>
+                   <button onClick={() => setStage('active')} className={`flex items-center gap-2 text-[10px] tracking-widest uppercase mb-8 font-cinzel ${theme.subText}`}><ChevronLeft size={16} /> Close Directives</button>
+                   <div className="space-y-4 max-w-lg mx-auto w-full">
+                     <p className={`text-[10px] tracking-widest uppercase text-center border-b pb-3 border-current/10 mb-6 ${theme.subText}`}>Active Directives</p>
+                     {DAILY_QUESTS.map(quest => {
+                       const isDone = profile.questsCompleted?.includes(quest.id);
+                       return (
+                         <div key={quest.id} className={`p-5 border rounded-sm ${theme.glass} ${isDone ? 'opacity-40' : ''}`}>
+                           <div className="flex justify-between mb-2">
+                             <h4 className="text-xs tracking-widest uppercase font-serif">{quest.title}</h4>
+                             <span className={`text-[9px] ${theme.accent}`}>+{quest.xp} XP</span>
+                           </div>
+                           <p className={`text-[9px] leading-relaxed mb-4 ${theme.subText}`}>{quest.desc}</p>
+                           {!isDone && <button onClick={() => handleQuestCompletion(quest.id, quest.xp)} className="w-full py-2.5 border text-[9px] tracking-widest uppercase">Claim</button>}
+                         </div>
+                       )
+                     })}
+                   </div>
                 </div>
               )}
-
             </main>
           </div>
         )}
       </div>
 
-      <nav className={`fixed bottom-6 left-6 right-6 h-16 border rounded-full backdrop-blur-3xl z-[90] flex items-center justify-around px-4 transition-all duration-1000 ${theme.glass} shadow-2xl`}>
-        <NavItem id="hall" icon={Home} label="Hall" />
-        <NavItem id="search" icon={SearchIcon} label="Search" />
-        <NavItem id="forum" icon={MessageSquare} label="Forum" />
-        <NavItem id="sanctum" icon={BookMarked} label="Sanctum" />
+      {/* BOTTOM NAV */}
+      <nav className={`fixed bottom-6 left-6 right-6 h-16 border rounded-full backdrop-blur-3xl z-[90] flex items-center justify-around px-4 transition-all duration-1000 ${theme.glass} shadow-xl`}>
+        <button onClick={() => { setActiveTab('hall'); setChamberType(null); }} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'hall' ? theme.accent : 'opacity-40'}`}><Home size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Hall</span></button>
+        <button onClick={() => setActiveTab('search')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'search' ? theme.accent : 'opacity-40'}`}><SearchIcon size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Search</span></button>
+        <button onClick={() => setActiveTab('forum')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'forum' ? theme.accent : 'opacity-40'}`}><MessageSquare size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Forum</span></button>
+        <button onClick={() => setActiveTab('sanctum')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'sanctum' ? theme.accent : 'opacity-40'}`}><BookMarked size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Sanctum</span></button>
       </nav>
       
     </div>
