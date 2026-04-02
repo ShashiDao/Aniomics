@@ -190,14 +190,23 @@ export default function App() {
       
       <Stardust color={theme.particle} />
 
-      {/* TOP SYSTEM BAR - ADJUSTED TO RIGHT SIDE */}
-      <div className="fixed top-6 right-6 z-[60] flex items-center gap-3">
-        <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm opacity-80`}>
-          {isNight ? <Moon size={14} className="animate-pulse" /> : <Sun size={14} className="animate-spin-slow" />}
-        </button>
-        <button onClick={() => setIsMenuOpen(true)} className={`p-3 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-lg`}>
-          <Menu size={20} />
-        </button>
+      {/* TOP SYSTEM BAR */}
+      <div className="fixed top-6 left-6 right-6 z-[60] flex items-center justify-between">
+        {/* LOGO AREA (TOP LEFT) */}
+        <div className="flex items-center gap-2">
+          <Library size={24} className={theme.accent} />
+          <span className="text-[10px] tracking-[0.3em] font-serif font-bold opacity-80">ANIOMICS</span>
+        </div>
+
+        {/* CONTROLS AREA (TOP RIGHT) */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm opacity-80`}>
+            {isNight ? <Moon size={14} className="animate-pulse" /> : <Sun size={14} className="animate-spin-slow" />}
+          </button>
+          <button onClick={() => setIsMenuOpen(true)} className={`p-3 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-lg`}>
+            <Menu size={20} />
+          </button>
+        </div>
       </div>
 
       {/* ARCHON'S DRAWER */}
@@ -252,9 +261,9 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col p-6 pt-16 animate-in fade-in duration-700 overflow-hidden">
+          <div className="w-full h-full flex flex-col p-6 pt-20 animate-in fade-in duration-700 overflow-hidden">
             
-            {/* KNOWLEDGE HEADER - ADJUSTED TO CENTERED */}
+            {/* KNOWLEDGE HEADER - CENTERED */}
             <header className="mb-6 flex flex-col items-center text-center">
               <div className="w-full flex flex-col items-center mb-4 font-serif">
                 <div className="flex items-center gap-2 mb-1">
