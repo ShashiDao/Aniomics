@@ -42,7 +42,6 @@ const DAILY_QUESTS = [
   { id: 'q3', title: 'Seeker of Truth', xp: 100, desc: 'Discover 3 new titles.' }
 ];
 
-// --- ATMOSPHERE COMPONENT ---
 const Atmosphere = ({ phase, color }) => {
   const isNight = phase === 'night';
   const particles = useMemo(() => Array.from({ length: isNight ? 100 : 40 }).map((_, i) => ({
@@ -66,11 +65,9 @@ const Atmosphere = ({ phase, color }) => {
   );
 };
 
-// --- AI LIBRARIAN LOGIC ---
 const callGemini = async (prompt, userProfile) => {
-  if (!GEMINI_API_KEY) return "The Archivist is silent. Please ensure the celestial key is inscribed in settings.";
-  
-  const sys = `You are "The Archivist", a mystical AI Librarian. Speak poetically and briefly. User: ${userProfile.name}, Rank: ${userProfile.title}. Refer to titles as scrolls.`;
+  if (!GEMINI_API_KEY) return "The Archivist is silent. Key required.";
+  const sys = `You are "The Archivist", a mystical AI Librarian. Speak poetically. User: ${userProfile.name}, Rank: ${userProfile.title}.`;
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
@@ -91,9 +88,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [chamberType, setChamberType] = useState(null);
+  const [isOpening, setIsOpening] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLibrarianOpen, setIsLibrarianOpen] = useState(false);
-  
   const [chatHistory, setChatHistory] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -104,7 +101,6 @@ export default function App() {
 
   const isNight = phase === 'night';
   const theme = {
-    // UPDATED: Muted Day mode colors to be easier on the eyes
     bg: isNight ? 'bg-[#050505]' : 'bg-[#DCD4B8]', 
     text: isNight ? 'text-[#F3E5AB]' : 'text-[#2D1F16]',
     subText: isNight ? 'text-white/40' : 'text-[#2D1F16]/60',
@@ -129,21 +125,23 @@ export default function App() {
     });
   }, [user]);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory]);
-
-  const handleRitual = async () => {
-    const n = prompt("Inscribe your Name:");
-    if (n && user) await setDoc(doc(db, 'aniomics_v1', 'users', user.uid, 'profile'), { name: n, xp: 0, questsCompleted: ['q2'] });
-  };
-
   const resetToHome = () => {
-    setStage('active'); setActiveTab('hall'); setChamberType(null);
+    setStage('active'); setActiveTab('hall'); setChamberType(null); setIsOpening(false);
     setIsMenuOpen(false); setIsLibrarianOpen(false);
   };
 
   const handleQuestCompletion = async (id, xp) => {
     if (profile.questsCompleted.includes(id) || !user) return;
     await setDoc(doc(db, 'aniomics_v1', 'users', user.uid, 'profile'), { ...profile, xp: profile.xp + xp, questsCompleted: [...profile.questsCompleted, id] }, { merge: true });
+  };
+
+  const enterChamber = async (type) => {
+    setIsOpening(true);
+    setTimeout(async () => {
+      setChamberType(type);
+      await executeSearch(type);
+      setIsOpening(false);
+    }, 800);
   };
 
   const executeSearch = async (t) => {
@@ -178,9 +176,13 @@ export default function App() {
         @keyframes rain { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(110vh); opacity: 0; } }
         @keyframes sandstorm { 0% { transform: translateX(-10vw); opacity: 0; } 100% { transform: translateX(110vw); opacity: 0; } }
         @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
+        @keyframes gate-left { from { transform: perspective(1000px) rotateY(0deg); } to { transform: perspective(1000px) rotateY(-90deg); } }
+        @keyframes gate-right { from { transform: perspective(1000px) rotateY(0deg); } to { transform: perspective(1000px) rotateY(90deg); } }
         .animate-rain { animation: rain linear infinite; }
         .animate-sandstorm { animation: sandstorm linear infinite; }
         .animate-breathe { animation: breathe 3s ease-in-out infinite; }
+        .animate-gate-left { animation: gate-left 0.8s ease-in forwards; }
+        .animate-gate-right { animation: gate-right 0.8s ease-in forwards; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
       
@@ -207,7 +209,7 @@ export default function App() {
             <h2 className="text-xl font-serif tracking-widest uppercase">The Archivist</h2>
             <button onClick={() => setIsLibrarianOpen(false)}><X size={32} /></button>
           </div>
-          <div className="flex-1 overflow-y-auto hide-scrollbar flex flex-col gap-4 mb-6">
+          <div className="flex-1 overflow-y-auto hide-scrollbar flex flex-col gap-4 mb-6 px-2">
             {chatHistory.map((c, i) => (
               <div key={i} className={`flex ${c.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] p-4 rounded-2xl text-[11px] font-serif leading-relaxed ${c.role === 'user' ? 'bg-black/10 border border-current/20' : 'bg-white/10 border border-current/10'}`}>{c.content}</div>
@@ -249,16 +251,59 @@ export default function App() {
               <div className="h-[3px] w-4/5 bg-current/10 rounded-full mt-4 overflow-hidden"><div className={`h-full ${currentRank.bar} transition-all duration-1000 shadow-lg`} style={{ width: `${progress}%` }} /></div>
             </header>
 
-            <main className="flex-1 overflow-y-auto hide-scrollbar pb-10">
+            <main className="flex-1 overflow-y-auto hide-scrollbar pb-10 flex flex-col">
               {activeTab === 'hall' && !chamberType && (
-                <div className="grid grid-cols-2 gap-4 pt-6 animate-in slide-in-from-bottom-6">
-                  <div onClick={() => { setChamberType("ANIME"); executeSearch("ANIME"); }} className={`h-72 rounded-t-full border-2 p-8 flex flex-col items-center justify-end transition-all hover:scale-105 active:scale-95 ${theme.glass}`}><Zap size={36} className={`${theme.accent} mb-4`} /><h3 className="text-xl font-serif uppercase">Motion</h3></div>
-                  <div onClick={() => { setChamberType("MANGA"); executeSearch("MANGA"); }} className={`h-72 rounded-t-full border-2 p-8 flex flex-col items-center justify-end transition-all hover:scale-105 active:scale-95 ${theme.glass}`}><Scroll size={36} className={`${theme.accent} mb-4`} /><h3 className="text-xl font-serif uppercase">Ink</h3></div>
+                <div className="flex-1 grid grid-cols-2 gap-4 py-8">
+                  {/* MOTION GATE */}
+                  <div 
+                    onClick={() => enterChamber("ANIME")}
+                    className={`relative group cursor-pointer h-full transition-transform active:scale-95`}
+                  >
+                    <div className={`absolute inset-0 border-2 border-dashed ${theme.accent} opacity-20 rounded-t-full scale-105 group-hover:opacity-40 transition-opacity`} />
+                    <div className={`h-full w-full rounded-t-full border-2 border-b-0 flex flex-col items-center justify-center relative overflow-hidden ${theme.glass}`}>
+                      {/* Gate Doors Visual */}
+                      <div className={`absolute inset-y-0 left-0 w-1/2 border-r border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'ANIME' ? 'animate-gate-left' : ''}`} style={{ transformOrigin: 'left' }} />
+                      <div className={`absolute inset-y-0 right-0 w-1/2 border-l border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'ANIME' ? 'animate-gate-right' : ''}`} style={{ transformOrigin: 'right' }} />
+                      
+                      <div className="z-10 flex flex-col items-center gap-4">
+                        <div className={`p-4 rounded-full border border-current/20 group-hover:scale-110 transition-transform ${theme.accent}`}>
+                          <Zap size={40} className="drop-shadow-[0_0_8px_currentColor]" />
+                        </div>
+                        <div className="text-center">
+                          <h3 className="text-xl font-serif uppercase tracking-[0.2em]">Motion</h3>
+                          <p className="text-[8px] uppercase tracking-widest opacity-40 mt-1">Chamber of Souls</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* INK GATE */}
+                  <div 
+                    onClick={() => enterChamber("MANGA")}
+                    className={`relative group cursor-pointer h-full transition-transform active:scale-95`}
+                  >
+                    <div className={`absolute inset-0 border-2 border-dashed ${theme.accent} opacity-20 rounded-t-full scale-105 group-hover:opacity-40 transition-opacity`} />
+                    <div className={`h-full w-full rounded-t-full border-2 border-b-0 flex flex-col items-center justify-center relative overflow-hidden ${theme.glass}`}>
+                       {/* Gate Doors Visual */}
+                       <div className={`absolute inset-y-0 left-0 w-1/2 border-r border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'MANGA' ? 'animate-gate-left' : ''}`} style={{ transformOrigin: 'left' }} />
+                       <div className={`absolute inset-y-0 right-0 w-1/2 border-l border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'MANGA' ? 'animate-gate-right' : ''}`} style={{ transformOrigin: 'right' }} />
+
+                      <div className="z-10 flex flex-col items-center gap-4">
+                        <div className={`p-4 rounded-full border border-current/20 group-hover:scale-110 transition-transform ${theme.accent}`}>
+                          <Scroll size={40} className="drop-shadow-[0_0_8px_currentColor]" />
+                        </div>
+                        <div className="text-center">
+                          <h3 className="text-xl font-serif uppercase tracking-[0.2em]">Ink</h3>
+                          <p className="text-[8px] uppercase tracking-widest opacity-40 mt-1">Chamber of Scrolls</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'search' && (
-                <div className="flex flex-col gap-6 pt-2">
+                <div className="flex flex-col gap-6 pt-2 animate-in fade-in">
                   <div className={`flex items-center gap-4 p-4 border rounded-2xl ${theme.glass}`}><SearchIcon size={20} className="opacity-30" /><input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && executeSearch()} placeholder="Query the Void..." className="bg-transparent outline-none flex-1 text-xs font-serif uppercase" /></div>
                   <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
                     <button onClick={() => { const t = searchFilter === 'ANIME' ? 'MANGA' : 'ANIME'; setSearchFilter(t); executeSearch(t); }} className={`px-5 py-2.5 rounded-full border text-[9px] uppercase tracking-widest font-bold transition-all ${theme.glass} ${theme.accent}`}>{searchFilter === 'ANIME' ? 'Motion' : 'Ink'}</button>
@@ -274,10 +319,10 @@ export default function App() {
 
               {chamberType && activeTab === 'hall' && (
                 <div className="animate-in fade-in pb-10">
-                  <button onClick={() => setChamberType(null)} className={`flex items-center gap-2 text-[10px] uppercase mb-8 font-serif opacity-60`}><ChevronLeft size={16} /> Close Archives</button>
+                  <button onClick={() => setChamberType(null)} className={`flex items-center gap-2 text-[10px] uppercase mb-8 font-serif opacity-60 active:scale-95`}><ChevronLeft size={16} /> Leave Chamber</button>
                   <div className="grid grid-cols-2 gap-4">
-                    {loading ? <div className="col-span-2 flex justify-center py-20 animate-pulse"><Loader2 /></div> : 
-                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border-2 relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center`}>{item.title.english || item.title.romaji}</div></div>))
+                    {loading ? <div className="col-span-2 flex justify-center py-20 animate-pulse"><Loader2 size={32} /></div> : 
+                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border-2 relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-100" alt="arch" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center line-clamp-2 font-serif`}>{item.title.english || item.title.romaji}</div></div>))
                     }
                   </div>
                 </div>
