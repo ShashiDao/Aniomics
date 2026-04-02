@@ -26,12 +26,10 @@ export default function App() {
   const [readerData, setReaderData] = useState(null);
 
   useEffect(() => {
-    // Detect PWA Status
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     setIsApp(isStandalone);
     if (isStandalone) setPhase('night');
 
-    // Install Prompt Listener
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -56,11 +54,10 @@ export default function App() {
 
     setIsSanctifying(true);
     try {
-      // Calls your Vercel Serverless Function
       const res = await fetch(`/api/sanctify?url=${encodeURIComponent(urlInput)}`);
       const data = await res.json();
       
-      if (data.success && data.images.length > 0) {
+      if (data.success && data.images && data.images.length > 0) {
         setReaderData(data);
       } else {
         alert("The void is too strong. No images found at this link.");
@@ -80,27 +77,33 @@ export default function App() {
     card: isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
   };
 
-  // --- 1. READER VIEW (Activated when content is found) ---
   if (readerData) {
     return (
       <div className={`min-h-screen ${theme.bg} flex flex-col z-[300]`}>
         <nav className="fixed top-0 w-full h-14 bg-black/90 backdrop-blur-md flex items-center px-4 justify-between border-b border-white/10 z-[301]">
           <button onClick={() => setReaderData(null)} className="text-[#E6C35C] flex items-center gap-2">
             <ChevronLeft size={20} />
-            <span className="text-[10px] uppercase font-black tracking-widest">Exit</span>
+            <span className="text-[10px] uppercase font-black tracking-widest">Exit Sanctuary</span>
           </button>
           <span className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">{readerData.images.length} Pages</span>
         </nav>
-        <main className="pt-14 flex flex-col items-center bg-black">
+        <main className="pt-14 flex flex-col items-center bg-black min-h-screen">
           {readerData.images.map((img, i) => (
-            <img key={i} src={img} alt={`Page ${i+1}`} className="w-full max-w-3xl h-auto" loading="lazy" />
+            <img 
+              key={i} 
+              src={img} 
+              alt={`Page ${i+1}`} 
+              className="w-full max-w-3xl h-auto" 
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={(e) => e.target.style.display = 'none'}
+            />
           ))}
         </main>
       </div>
     );
   }
 
-  // --- 2. APP DASHBOARD (Shown when running as PWA) ---
   if (isApp) {
     return (
       <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col font-sans transition-colors duration-700`}>
@@ -116,7 +119,7 @@ export default function App() {
         </header>
 
         <main className="flex-1 pt-24 px-6 pb-32 space-y-8 z-10">
-          <div className={`p-1.5 rounded-full border ${theme.card} shadow-2xl backdrop-blur-2xl flex items-center`}>
+          <form onSubmit={handleSanctify} className={`p-1.5 rounded-full border ${theme.card} shadow-2xl backdrop-blur-2xl flex items-center`}>
             <div className="pl-4 pr-2 opacity-30"><Search size={16} /></div>
             <input 
               placeholder="Paste manga link..." 
@@ -124,10 +127,10 @@ export default function App() {
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
             />
-            <button onClick={handleSanctify} className="h-9 w-9 bg-[#E6C35C] rounded-full flex items-center justify-center text-black shadow-lg">
+            <button type="submit" className="h-9 w-9 bg-[#E6C35C] rounded-full flex items-center justify-center text-black shadow-lg">
               {isSanctifying ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
             </button>
-          </div>
+          </form>
 
           <section>
             <h2 className="text-[10px] uppercase tracking-[0.4em] font-black opacity-40 mb-5">Your Library</h2>
@@ -160,7 +163,6 @@ export default function App() {
     );
   }
 
-  // --- 3. PORTAL (Default Web View) ---
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col font-sans relative overflow-x-hidden`}>
       <Atmosphere phase={phase} />
