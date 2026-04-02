@@ -25,7 +25,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// SECURE API KEY LOADING
+// SECURE API KEY LOADING FROM VERCEL
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const RANKS = [
@@ -42,9 +42,10 @@ const DAILY_QUESTS = [
   { id: 'q3', title: 'Seeker of Truth', xp: 100, desc: 'Discover 3 new titles.' }
 ];
 
+// --- ATMOSPHERE ---
 const Atmosphere = ({ phase, color }) => {
   const isNight = phase === 'night';
-  const particles = useMemo(() => Array.from({ length: isNight ? 100 : 40 }).map((_, i) => ({
+  const particles = useMemo(() => Array.from({ length: isNight ? 80 : 40 }).map((_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,
@@ -53,7 +54,7 @@ const Atmosphere = ({ phase, color }) => {
     opacity: isNight ? Math.random() * 0.3 + 0.1 : Math.random() * 0.2 + 0.05,
     size: isNight ? '1px' : `${Math.random() * 3 + 1}px`,
     height: isNight ? `${Math.random() * 30 + 10}px` : `${Math.random() * 3 + 1}px`,
-  })), [phase]);
+  })), [isNight]);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -65,8 +66,9 @@ const Atmosphere = ({ phase, color }) => {
   );
 };
 
+// --- AI LIBRARIAN ---
 const callGemini = async (prompt, userProfile) => {
-  if (!GEMINI_API_KEY) return "The Archivist is silent. Key required.";
+  if (!GEMINI_API_KEY) return "The Archivist is silent. Key required in Vercel.";
   const sys = `You are "The Archivist", a mystical AI Librarian. Speak poetically. User: ${userProfile.name}, Rank: ${userProfile.title}.`;
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -88,9 +90,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [chamberType, setChamberType] = useState(null);
-  const [isOpening, setIsOpening] = useState(false);
+  const [gateOpening, setGateOpening] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLibrarianOpen, setIsLibrarianOpen] = useState(false);
+  
   const [chatHistory, setChatHistory] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -121,12 +124,18 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     return onSnapshot(doc(db, 'aniomics_v1', 'users', user.uid, 'profile'), (snap) => {
-      if (snap.exists()) { setProfile(snap.data()); setStage('active'); }
+      if (snap.exists()) { 
+        const d = snap.data();
+        setProfile({ ...d, questsCompleted: d.questsCompleted || [] });
+        setStage('active'); 
+      }
     });
   }, [user]);
 
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory]);
+
   const resetToHome = () => {
-    setStage('active'); setActiveTab('hall'); setChamberType(null); setIsOpening(false);
+    setStage('active'); setActiveTab('hall'); setChamberType(null); setGateOpening(null);
     setIsMenuOpen(false); setIsLibrarianOpen(false);
   };
 
@@ -135,12 +144,12 @@ export default function App() {
     await setDoc(doc(db, 'aniomics_v1', 'users', user.uid, 'profile'), { ...profile, xp: profile.xp + xp, questsCompleted: [...profile.questsCompleted, id] }, { merge: true });
   };
 
-  const enterChamber = async (type) => {
-    setIsOpening(true);
-    setTimeout(async () => {
+  const handleGateEntry = (type) => {
+    setGateOpening(type);
+    setTimeout(() => {
       setChamberType(type);
-      await executeSearch(type);
-      setIsOpening(false);
+      executeSearch(type);
+      setGateOpening(null);
     }, 800);
   };
 
@@ -176,13 +185,13 @@ export default function App() {
         @keyframes rain { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(110vh); opacity: 0; } }
         @keyframes sandstorm { 0% { transform: translateX(-10vw); opacity: 0; } 100% { transform: translateX(110vw); opacity: 0; } }
         @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
-        @keyframes gate-left { from { transform: perspective(1000px) rotateY(0deg); } to { transform: perspective(1000px) rotateY(-90deg); } }
-        @keyframes gate-right { from { transform: perspective(1000px) rotateY(0deg); } to { transform: perspective(1000px) rotateY(90deg); } }
+        @keyframes door-l { from { transform: translateX(0) rotateY(0); } to { transform: translateX(-100%) rotateY(-90deg); opacity: 0; } }
+        @keyframes door-r { from { transform: translateX(0) rotateY(0); } to { transform: translateX(100%) rotateY(90deg); opacity: 0; } }
         .animate-rain { animation: rain linear infinite; }
         .animate-sandstorm { animation: sandstorm linear infinite; }
         .animate-breathe { animation: breathe 3s ease-in-out infinite; }
-        .animate-gate-left { animation: gate-left 0.8s ease-in forwards; }
-        .animate-gate-right { animation: gate-right 0.8s ease-in forwards; }
+        .door-l-open { animation: door-l 0.8s ease-in forwards; }
+        .door-r-open { animation: door-r 0.8s ease-in forwards; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
       
@@ -190,14 +199,14 @@ export default function App() {
 
       <div className="fixed top-6 left-6 right-6 z-[160] flex items-start justify-between">
         <button onClick={resetToHome} className="flex flex-col items-start gap-1 pointer-events-auto">
-          <Library size={48} className={`${theme.accent} drop-shadow-xl transition-transform active:scale-90`} />
+          <Library size={48} className={`${theme.accent} drop-shadow-xl active:scale-90`} />
           {stage !== 'quests' && <span className="text-[11px] tracking-[0.3em] font-serif font-bold uppercase opacity-80">Aniomics</span>}
         </button>
 
         <div className="flex items-center gap-3">
           {stage === 'quests' && <button onClick={() => setStage('active')} className={`p-2 rounded-full ${theme.glass} active:scale-95`}><MoveLeft size={22} /></button>}
           <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm opacity-80`}>
-            {isNight ? <Moon size={16} className="animate-pulse" /> : <Sun size={16} />}
+            {isNight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
           <button onClick={() => setIsMenuOpen(true)} className={`p-3 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-lg`}><Menu size={24} /></button>
         </div>
@@ -209,17 +218,17 @@ export default function App() {
             <h2 className="text-xl font-serif tracking-widest uppercase">The Archivist</h2>
             <button onClick={() => setIsLibrarianOpen(false)}><X size={32} /></button>
           </div>
-          <div className="flex-1 overflow-y-auto hide-scrollbar flex flex-col gap-4 mb-6 px-2">
+          <div className="flex-1 overflow-y-auto hide-scrollbar flex flex-col gap-4 mb-6">
             {chatHistory.map((c, i) => (
               <div key={i} className={`flex ${c.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-4 rounded-2xl text-[11px] font-serif leading-relaxed ${c.role === 'user' ? 'bg-black/10 border border-current/20' : 'bg-white/10 border border-current/10'}`}>{c.content}</div>
+                <div className={`max-w-[80%] p-4 rounded-2xl text-[11px] font-serif ${c.role === 'user' ? 'bg-black/10 border border-current/20' : 'bg-white/10 border border-current/10'}`}>{c.content}</div>
               </div>
             ))}
             {isTyping && <div className="p-4 rounded-2xl bg-white/5 w-12 flex justify-center"><Loader2 className="animate-spin" size={16} /></div>}
             <div ref={chatEndRef} />
           </div>
           <div className={`flex items-center gap-3 p-4 border rounded-2xl ${theme.glass}`}>
-            <input type="text" value={userInput} onChange={e => setUserInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Ask the Archivist..." className="bg-transparent outline-none flex-1 text-xs" />
+            <input type="text" value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="Query the Archivist..." className="bg-transparent outline-none flex-1 text-xs" />
             <button onClick={handleSendMessage} className={theme.accent}><Send size={20} /></button>
           </div>
         </div>
@@ -229,20 +238,15 @@ export default function App() {
         <div className={`fixed inset-0 z-[200] backdrop-blur-3xl p-8 flex flex-col ${isNight ? 'bg-black/90' : 'bg-[#DCD4B8]/95'}`}>
           <div className="flex justify-between items-center mb-10"><h2 className="text-2xl font-serif tracking-widest uppercase text-center w-full">Archon's Tools</h2><button onClick={() => setIsMenuOpen(false)} className="absolute right-8"><X size={32} /></button></div>
           <div className="grid grid-cols-3 gap-4">
-            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Gamepad2 size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Trials</span></div>
-            <div onClick={() => { setStage('quests'); setIsMenuOpen(false); }} className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass} cursor-pointer`}><Target size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Directives</span></div>
-            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Trophy size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Rankings</span></div>
-            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Wallet size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Essence</span></div>
-            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Gift size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Runes</span></div>
-            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Settings size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Sanctuary</span></div>
+            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 ${theme.glass}`}><Gamepad2 size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Trials</span></div>
+            <div onClick={() => { setStage('quests'); setIsMenuOpen(false); }} className={`p-6 border rounded-2xl flex flex-col items-center gap-3 ${theme.glass} cursor-pointer`}><Target size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Directives</span></div>
+            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 ${theme.glass}`}><Trophy size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Rankings</span></div>
           </div>
         </div>
       )}
 
       <div className="z-10 w-full h-full max-w-lg flex flex-col relative pb-24">
-        {stage === 'entrance' ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6"><button onClick={handleRitual} className="px-10 py-5 border-2 rounded-sm font-serif uppercase tracking-widest active:bg-white/10">Initiate Ritual</button></div>
-        ) : (
+        {stage === 'active' && (
           <div className="w-full h-full flex flex-col p-6 pt-24 overflow-hidden">
             <header className="mb-8 flex flex-col items-center text-center">
               <div className="flex items-center gap-2 mb-2 font-serif"><Star size={10} className={currentRank.color} /><span className={`text-[10px] tracking-widest font-bold uppercase ${currentRank.color}`}>{currentRank.title}</span></div>
@@ -255,48 +259,21 @@ export default function App() {
               {activeTab === 'hall' && !chamberType && (
                 <div className="flex-1 grid grid-cols-2 gap-4 py-8">
                   {/* MOTION GATE */}
-                  <div 
-                    onClick={() => enterChamber("ANIME")}
-                    className={`relative group cursor-pointer h-full transition-transform active:scale-95`}
-                  >
-                    <div className={`absolute inset-0 border-2 border-dashed ${theme.accent} opacity-20 rounded-t-full scale-105 group-hover:opacity-40 transition-opacity`} />
+                  <div onClick={() => handleGateEntry("ANIME")} className="relative h-full cursor-pointer group">
                     <div className={`h-full w-full rounded-t-full border-2 border-b-0 flex flex-col items-center justify-center relative overflow-hidden ${theme.glass}`}>
-                      {/* Gate Doors Visual */}
-                      <div className={`absolute inset-y-0 left-0 w-1/2 border-r border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'ANIME' ? 'animate-gate-left' : ''}`} style={{ transformOrigin: 'left' }} />
-                      <div className={`absolute inset-y-0 right-0 w-1/2 border-l border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'ANIME' ? 'animate-gate-right' : ''}`} style={{ transformOrigin: 'right' }} />
-                      
-                      <div className="z-10 flex flex-col items-center gap-4">
-                        <div className={`p-4 rounded-full border border-current/20 group-hover:scale-110 transition-transform ${theme.accent}`}>
-                          <Zap size={40} className="drop-shadow-[0_0_8px_currentColor]" />
-                        </div>
-                        <div className="text-center">
-                          <h3 className="text-xl font-serif uppercase tracking-[0.2em]">Motion</h3>
-                          <p className="text-[8px] uppercase tracking-widest opacity-40 mt-1">Chamber of Souls</p>
-                        </div>
-                      </div>
+                      <div className={`absolute inset-y-0 left-0 w-1/2 border-r border-current opacity-10 ${gateOpening === 'ANIME' ? 'door-l-open' : ''}`} style={{ transformOrigin: 'left' }} />
+                      <div className={`absolute inset-y-0 right-0 w-1/2 border-l border-current opacity-10 ${gateOpening === 'ANIME' ? 'door-r-open' : ''}`} style={{ transformOrigin: 'right' }} />
+                      <Zap size={40} className={`z-10 ${theme.accent} mb-4`} />
+                      <h3 className="z-10 text-xl font-serif uppercase">Motion</h3>
                     </div>
                   </div>
-
                   {/* INK GATE */}
-                  <div 
-                    onClick={() => enterChamber("MANGA")}
-                    className={`relative group cursor-pointer h-full transition-transform active:scale-95`}
-                  >
-                    <div className={`absolute inset-0 border-2 border-dashed ${theme.accent} opacity-20 rounded-t-full scale-105 group-hover:opacity-40 transition-opacity`} />
+                  <div onClick={() => handleGateEntry("MANGA")} className="relative h-full cursor-pointer group">
                     <div className={`h-full w-full rounded-t-full border-2 border-b-0 flex flex-col items-center justify-center relative overflow-hidden ${theme.glass}`}>
-                       {/* Gate Doors Visual */}
-                       <div className={`absolute inset-y-0 left-0 w-1/2 border-r border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'MANGA' ? 'animate-gate-left' : ''}`} style={{ transformOrigin: 'left' }} />
-                       <div className={`absolute inset-y-0 right-0 w-1/2 border-l border-current opacity-10 transition-transform duration-700 ${isOpening && chamberType === 'MANGA' ? 'animate-gate-right' : ''}`} style={{ transformOrigin: 'right' }} />
-
-                      <div className="z-10 flex flex-col items-center gap-4">
-                        <div className={`p-4 rounded-full border border-current/20 group-hover:scale-110 transition-transform ${theme.accent}`}>
-                          <Scroll size={40} className="drop-shadow-[0_0_8px_currentColor]" />
-                        </div>
-                        <div className="text-center">
-                          <h3 className="text-xl font-serif uppercase tracking-[0.2em]">Ink</h3>
-                          <p className="text-[8px] uppercase tracking-widest opacity-40 mt-1">Chamber of Scrolls</p>
-                        </div>
-                      </div>
+                      <div className={`absolute inset-y-0 left-0 w-1/2 border-r border-current opacity-10 ${gateOpening === 'MANGA' ? 'door-l-open' : ''}`} style={{ transformOrigin: 'left' }} />
+                      <div className={`absolute inset-y-0 right-0 w-1/2 border-l border-current opacity-10 ${gateOpening === 'MANGA' ? 'door-r-open' : ''}`} style={{ transformOrigin: 'right' }} />
+                      <Scroll size={40} className={`z-10 ${theme.accent} mb-4`} />
+                      <h3 className="z-10 text-xl font-serif uppercase">Ink</h3>
                     </div>
                   </div>
                 </div>
@@ -306,12 +283,12 @@ export default function App() {
                 <div className="flex flex-col gap-6 pt-2 animate-in fade-in">
                   <div className={`flex items-center gap-4 p-4 border rounded-2xl ${theme.glass}`}><SearchIcon size={20} className="opacity-30" /><input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && executeSearch()} placeholder="Query the Void..." className="bg-transparent outline-none flex-1 text-xs font-serif uppercase" /></div>
                   <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
-                    <button onClick={() => { const t = searchFilter === 'ANIME' ? 'MANGA' : 'ANIME'; setSearchFilter(t); executeSearch(t); }} className={`px-5 py-2.5 rounded-full border text-[9px] uppercase tracking-widest font-bold transition-all ${theme.glass} ${theme.accent}`}>{searchFilter === 'ANIME' ? 'Motion' : 'Ink'}</button>
-                    <button onClick={() => { const s = searchSort === 'TRENDING_DESC' ? 'POPULARITY_DESC' : 'TRENDING_DESC'; setSearchSort(s); executeSearch(); }} className={`px-5 py-2.5 rounded-full border text-[9px] uppercase tracking-widest font-bold transition-all ${theme.glass}`}>Sort: {searchSort === 'TRENDING_DESC' ? 'Trend' : 'Pop'}</button>
+                    <button onClick={() => { setSearchFilter(searchFilter === 'ANIME' ? 'MANGA' : 'ANIME'); executeSearch(); }} className={`px-5 py-2.5 rounded-full border text-[9px] uppercase font-bold ${theme.glass} ${theme.accent}`}>{searchFilter === 'ANIME' ? 'Motion' : 'Ink'}</button>
+                    <button onClick={() => { setSearchSort(searchSort === 'TRENDING_DESC' ? 'POPULARITY_DESC' : 'TRENDING_DESC'); executeSearch(); }} className={`px-5 py-2.5 rounded-full border text-[9px] uppercase font-bold ${theme.glass}`}>Sort: {searchSort === 'TRENDING_DESC' ? 'Trend' : 'Pop'}</button>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     {loading ? <div className="col-span-2 flex justify-center py-24"><Loader2 className="animate-spin" size={36} /></div> :
-                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-100" alt="card" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center font-serif leading-tight line-clamp-2`}>{item.title.english || item.title.romaji}</div></div>))
+                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center font-serif leading-tight line-clamp-2`}>{item.title.english || item.title.romaji}</div></div>))
                     }
                   </div>
                 </div>
@@ -321,8 +298,8 @@ export default function App() {
                 <div className="animate-in fade-in pb-10">
                   <button onClick={() => setChamberType(null)} className={`flex items-center gap-2 text-[10px] uppercase mb-8 font-serif opacity-60 active:scale-95`}><ChevronLeft size={16} /> Leave Chamber</button>
                   <div className="grid grid-cols-2 gap-4">
-                    {loading ? <div className="col-span-2 flex justify-center py-20 animate-pulse"><Loader2 size={32} /></div> : 
-                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border-2 relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-100" alt="arch" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center line-clamp-2 font-serif`}>{item.title.english || item.title.romaji}</div></div>))
+                    {loading ? <div className="col-span-2 flex justify-center py-20"><Loader2 /></div> : 
+                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border-2 relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center font-serif`}>{item.title.english || item.title.romaji}</div></div>))
                     }
                   </div>
                 </div>
@@ -336,8 +313,7 @@ export default function App() {
                       <div key={q.id} className={`p-6 border rounded-sm ${theme.glass} ${done ? 'opacity-40 grayscale scale-95' : ''}`}>
                         <div className="flex justify-between mb-2"><h4 className="text-[11px] uppercase font-serif tracking-widest">{q.title}</h4><span className={`text-[10px] font-bold ${theme.accent}`}>+{q.xp} XP</span></div>
                         <p className={`text-[9px] opacity-60 mb-6`}>{q.desc}</p>
-                        {!done && <button onClick={() => handleQuestCompletion(q.id, q.xp)} className={`w-full py-3.5 border border-current/30 text-[9px] uppercase font-bold tracking-widest active:bg-current/10`}>Inscribe Fulfillment</button>}
-                        {done && <div className={`flex items-center gap-2 text-[9px] font-bold uppercase ${theme.accent}`}><CheckCircle2 size={12} /> Fulfilled</div>}
+                        {!done && <button onClick={() => handleQuestCompletion(q.id, q.xp)} className={`w-full py-3.5 border border-current/30 text-[9px] uppercase font-bold tracking-widest`}>Claim Knowledge</button>}
                       </div>
                     )
                   })}
