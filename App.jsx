@@ -157,9 +157,9 @@ export default function App() {
   const toggleLibrarian = () => {
     if (!libOpen) {
       const dialogues = {
-        hall: [`Archon ${profile.name}, Motion and Ink await.`, "The archives are perfectly aligned.", "Rank " + currentRank.title + " suits you."],
-        search: ["Seek and you shall find.", "The void rewards the precise."],
-        sanctum: ["Your bound collection is secure.", "Peace resides in the inner sanctum."]
+        hall: [`Archon ${profile.name}, the archives are steady.`, "Balance your search, Seeker.", "The stars recognize your current rank."],
+        search: ["Search with intent, Seeker.", "The void yields to the persistent."],
+        sanctum: ["Your bindings are secure.", "Quiet knowledge resides here."]
       };
       const pool = dialogues[activeTab] || dialogues.hall;
       setLibMsg(pool[Math.floor(Math.random() * pool.length)]);
@@ -190,13 +190,13 @@ export default function App() {
       
       <Stardust color={theme.particle} />
 
-      {/* TOP SYSTEM BAR */}
-      <div className="fixed top-6 left-6 z-[60] flex items-center gap-3">
-        <button onClick={() => setIsMenuOpen(true)} className={`p-3 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-lg`}>
-          <Menu size={20} />
-        </button>
+      {/* TOP SYSTEM BAR - ADJUSTED TO RIGHT SIDE */}
+      <div className="fixed top-6 right-6 z-[60] flex items-center gap-3">
         <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm opacity-80`}>
           {isNight ? <Moon size={14} className="animate-pulse" /> : <Sun size={14} className="animate-spin-slow" />}
+        </button>
+        <button onClick={() => setIsMenuOpen(true)} className={`p-3 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-lg`}>
+          <Menu size={20} />
         </button>
       </div>
 
@@ -204,8 +204,8 @@ export default function App() {
       {isMenuOpen && (
         <div className={`fixed inset-0 z-[200] backdrop-blur-3xl animate-in fade-in zoom-in duration-300 flex flex-col p-8 ${isNight ? 'bg-black/90' : 'bg-[#F3E5AB]/95'}`}>
           <div className="flex justify-between items-center mb-10">
-            <h2 className="text-2xl font-serif tracking-widest uppercase">Archon's Tools</h2>
-            <button onClick={() => setIsMenuOpen(false)} className="p-2 opacity-50"><X size={28} /></button>
+            <h2 className="text-2xl font-serif tracking-widest uppercase text-center w-full">Archon's Tools</h2>
+            <button onClick={() => setIsMenuOpen(false)} className="p-2 opacity-50 absolute right-8"><X size={28} /></button>
           </div>
           
           <div className="grid grid-cols-3 gap-3 mb-8">
@@ -217,9 +217,9 @@ export default function App() {
             <MenuIcon icon={Settings} label="Sanctuary" />
           </div>
 
-          <div className={`mt-auto p-5 border rounded-2xl ${theme.glass} flex items-center gap-4`}>
+          <div className={`mt-auto p-5 border rounded-2xl ${theme.glass} flex items-center justify-center gap-4`}>
              <Star size={20} className={theme.accent} />
-             <div>
+             <div className="text-center">
                <p className="text-[8px] tracking-widest uppercase opacity-40">Current Patron</p>
                <p className="text-md font-serif tracking-widest">{profile.name}</p>
              </div>
@@ -253,21 +253,21 @@ export default function App() {
           </div>
         ) : (
           <div className="w-full h-full flex flex-col p-6 pt-16 animate-in fade-in duration-700 overflow-hidden">
-            <header className="mb-6">
-              <div className="flex justify-between items-end mb-4 font-serif">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Star size={10} className={currentRank.color} />
-                    <span className={`text-[9px] tracking-widest font-bold uppercase ${currentRank.color}`}>{currentRank.title}</span>
-                  </div>
-                  <h2 className="text-xl tracking-widest uppercase">{profile.name}</h2>
+            
+            {/* KNOWLEDGE HEADER - ADJUSTED TO CENTERED */}
+            <header className="mb-6 flex flex-col items-center text-center">
+              <div className="w-full flex flex-col items-center mb-4 font-serif">
+                <div className="flex items-center gap-2 mb-1">
+                  <Star size={10} className={currentRank.color} />
+                  <span className={`text-[9px] tracking-widest font-bold uppercase ${currentRank.color}`}>{currentRank.title}</span>
                 </div>
-                <div className="text-right">
+                <h2 className="text-xl tracking-[0.2em] uppercase">{profile.name}</h2>
+                <div className="mt-2">
                   <p className="text-[8px] tracking-widest uppercase opacity-40 mb-1">Knowledge</p>
                   <p className="text-sm text-[#E6C35C]">{profile.xp} <span className="opacity-30 text-[10px]">/ {nextRank.minXp}</span></p>
                 </div>
               </div>
-              <div className="h-[2px] w-full bg-current/10 rounded-full overflow-hidden">
+              <div className="h-[2.5px] w-4/5 bg-current/10 rounded-full overflow-hidden mx-auto shadow-inner">
                 <div className={`h-full ${currentRank.bar} transition-all duration-1000`} style={{ width: `${progress}%` }} />
               </div>
             </header>
@@ -277,13 +277,13 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-4 pt-4 animate-in slide-in-from-bottom-4 duration-500">
                   <div onClick={() => { setChamberType("ANIME"); setSearchFilter("ANIME"); executeSearch("ANIME"); }} className={`h-64 rounded-t-full border p-6 flex flex-col items-center justify-end cursor-pointer transition-all hover:scale-[1.02] ${theme.glass}`}>
                     <Zap size={28} className="text-[#E6C35C] mb-4" />
-                    <h3 className="text-xl tracking-widest font-serif uppercase">Motion</h3>
-                    <p className="text-[9px] opacity-40 tracking-widest uppercase">Anime Archives</p>
+                    <h3 className="text-xl tracking-widest font-serif uppercase text-center">Motion</h3>
+                    <p className="text-[9px] opacity-40 tracking-widest uppercase text-center">Anime Archives</p>
                   </div>
                   <div onClick={() => { setChamberType("MANGA"); setSearchFilter("MANGA"); executeSearch("MANGA"); }} className={`h-64 rounded-t-full border p-6 flex flex-col items-center justify-end cursor-pointer transition-all hover:scale-[1.02] ${theme.glass}`}>
                     <Scroll size={28} className="text-[#E6C35C] mb-4" />
-                    <h3 className="text-xl tracking-widest font-serif uppercase">Ink</h3>
-                    <p className="text-[9px] opacity-40 tracking-widest uppercase">Comic Archives</p>
+                    <h3 className="text-xl tracking-widest font-serif uppercase text-center">Ink</h3>
+                    <p className="text-[9px] opacity-40 tracking-widest uppercase text-center">Comic Archives</p>
                   </div>
                 </div>
               )}
@@ -344,7 +344,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* OVERLAY: QUESTS (VIA DRAWER) */}
               {stage === 'quests' && (
                 <div className="fixed inset-0 z-[150] flex flex-col p-8 pt-12 animate-in fade-in" style={{ backgroundColor: isNight ? '#050505' : '#F3E5AB' }}>
                    <button onClick={() => setStage('active')} className={`flex items-center gap-2 text-[10px] tracking-widest uppercase mb-8 font-cinzel ${theme.subText}`}><ChevronLeft size={16} /> Close Directives</button>
