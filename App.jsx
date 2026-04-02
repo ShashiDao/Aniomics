@@ -39,6 +39,46 @@ const DAILY_QUESTS = [
   { id: 'q3', title: 'Seeker of Truth', xp: 100, desc: 'Discover 3 new titles.' }
 ];
 
+// --- ATMOSPHERE COMPONENT ---
+const Atmosphere = ({ phase, color }) => {
+  const isNight = phase === 'night';
+  const count = isNight ? 80 : 50; // More drops for rain, fewer motes for sand
+
+  const particles = useMemo(() => Array.from({ length: count }).map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    top: `${Math.random() * 100}%`,
+    duration: isNight ? `${Math.random() * 0.5 + 0.5}s` : `${Math.random() * 10 + 5}s`,
+    delay: `${Math.random() * 5}s`,
+    opacity: Math.random() * 0.4 + 0.1,
+    size: isNight ? '1px' : `${Math.random() * 3 + 1}px`,
+    height: isNight ? `${Math.random() * 20 + 10}px` : `${Math.random() * 3 + 1}px`,
+  })), [phase, count]);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {particles.map(p => (
+        <div 
+          key={p.id} 
+          className={`absolute transition-colors duration-1000 ${isNight ? 'animate-rain' : 'animate-sandstorm'}`}
+          style={{ 
+            backgroundColor: color,
+            left: p.left, 
+            top: isNight ? '-20px' : p.top,
+            width: p.size, 
+            height: p.height, 
+            opacity: p.opacity,
+            animationDuration: p.duration, 
+            animationDelay: p.delay,
+            filter: !isNight ? 'blur(1px)' : 'none',
+            boxShadow: isNight ? 'none' : `0 0 4px ${color}`
+          }} 
+        />
+      ))}
+    </div>
+  );
+};
+
 const Typewriter = ({ text, speed = 40 }) => {
   const [displayedText, setDisplayedText] = useState("");
   useEffect(() => {
@@ -52,26 +92,6 @@ const Typewriter = ({ text, speed = 40 }) => {
     return () => clearInterval(timer);
   }, [text, speed]);
   return <span>{displayedText}</span>;
-};
-
-const Stardust = ({ color }) => {
-  const stars = useMemo(() => Array.from({ length: 60 }).map((_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    duration: `${Math.random() * 15 + 10}s`,
-    delay: `${Math.random() * 10}s`,
-    size: `${Math.random() * 3 + 0.5}px`,
-    opacity: Math.random() * 0.5 + 0.1,
-  })), []);
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {stars.map(s => (
-        <div key={s.id} className="absolute rounded-full opacity-0 animate-stardust transition-colors duration-1000"
-          style={{ backgroundColor: color, left: s.left, width: s.size, height: s.size, animationDuration: s.duration, animationDelay: s.delay, boxShadow: `0 0 5px ${color}` }} />
-      ))}
-    </div>
-  );
 };
 
 export default function App() {
@@ -157,9 +177,9 @@ export default function App() {
   const toggleLibrarian = () => {
     if (!libOpen) {
       const dialogues = {
-        hall: [`Archon ${profile.name}, the archives are steady.`, "Balance your search, Seeker.", "The stars recognize your current rank."],
-        search: ["Search with intent, Seeker.", "The void yields to the persistent."],
-        sanctum: ["Your bindings are secure.", "Quiet knowledge resides here."]
+        hall: [`Greetings ${profile.name}. The Sanctuary shifts.`, "Can you hear the atmosphere change?", `Archon Level ${currentRank.id} detected.`],
+        search: ["Search the void.", "Truth is hidden in plain sight."],
+        sanctum: ["Your collection is safe."]
       };
       const pool = dialogues[activeTab] || dialogues.hall;
       setLibMsg(pool[Math.floor(Math.random() * pool.length)]);
@@ -178,27 +198,40 @@ export default function App() {
     <div className={`h-screen w-full ${theme.bg} ${theme.text} transition-colors duration-1000 overflow-hidden relative flex flex-col items-center font-sans`}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
-        @keyframes stardust { 0% { transform: translateY(-10vh); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(110vh); opacity: 0; } }
+        
+        @keyframes rain {
+          0% { transform: translateY(-100%); opacity: 0; }
+          50% { opacity: 0.5; }
+          100% { transform: translateY(110vh); opacity: 0; }
+        }
+        
+        @keyframes sandstorm {
+          0% { transform: translateX(-10vw) translateY(0); opacity: 0; }
+          20% { opacity: 0.3; }
+          80% { opacity: 0.3; }
+          100% { transform: translateX(110vw) translateY(20px); opacity: 0; }
+        }
+
         @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.08); opacity: 1; } }
-        .animate-stardust { animation: stardust linear infinite; }
+
+        .animate-rain { animation: rain linear infinite; }
+        .animate-sandstorm { animation: sandstorm linear infinite; }
         .animate-spin-slow { animation: spin-slow 12s linear infinite; }
         .animate-breathe { animation: breathe 4s ease-in-out infinite; }
         .font-cinzel { font-family: 'Cinzel', serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
       
-      <Stardust color={theme.particle} />
+      <Atmosphere phase={phase} color={theme.particle} />
 
       {/* TOP SYSTEM BAR */}
       <div className="fixed top-6 left-6 right-6 z-[60] flex items-center justify-between">
-        {/* LOGO AREA (TOP LEFT) */}
         <div className="flex items-center gap-2">
           <Library size={24} className={theme.accent} />
-          <span className="text-[10px] tracking-[0.3em] font-serif font-bold opacity-80">ANIOMICS</span>
+          <span className="text-[10px] tracking-[0.3em] font-serif font-bold opacity-80 uppercase">Aniomics</span>
         </div>
 
-        {/* CONTROLS AREA (TOP RIGHT) */}
         <div className="flex items-center gap-3">
           <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm opacity-80`}>
             {isNight ? <Moon size={14} className="animate-pulse" /> : <Sun size={14} className="animate-spin-slow" />}
@@ -209,7 +242,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* ARCHON'S DRAWER */}
+      {/* MENU DRAWER */}
       {isMenuOpen && (
         <div className={`fixed inset-0 z-[200] backdrop-blur-3xl animate-in fade-in zoom-in duration-300 flex flex-col p-8 ${isNight ? 'bg-black/90' : 'bg-[#F3E5AB]/95'}`}>
           <div className="flex justify-between items-center mb-10">
@@ -236,7 +269,7 @@ export default function App() {
         </div>
       )}
 
-      {/* THE ARCHIVIST (LIBRARIAN) */}
+      {/* LIBRARIAN */}
       {stage === 'active' && !isMenuOpen && (
         <div className="fixed bottom-28 left-6 z-[100] flex items-end gap-3 pointer-events-none">
           <button onClick={toggleLibrarian} className={`pointer-events-auto p-4 rounded-full border backdrop-blur-3xl animate-breathe ${theme.glass} ${libOpen ? 'border-[#E6C35C]' : ''}`}>
@@ -263,7 +296,6 @@ export default function App() {
         ) : (
           <div className="w-full h-full flex flex-col p-6 pt-20 animate-in fade-in duration-700 overflow-hidden">
             
-            {/* KNOWLEDGE HEADER - CENTERED */}
             <header className="mb-6 flex flex-col items-center text-center">
               <div className="w-full flex flex-col items-center mb-4 font-serif">
                 <div className="flex items-center gap-2 mb-1">
@@ -321,10 +353,6 @@ export default function App() {
                   <div className={`flex items-center gap-3 p-4 border rounded-2xl ${theme.glass}`}>
                     <SearchIcon size={16} className="opacity-30" />
                     <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executeSearch()} placeholder="SEARCH THE VOID..." className="bg-transparent border-none outline-none flex-1 text-[10px] tracking-widest uppercase font-serif placeholder:opacity-10" />
-                  </div>
-                  <div className={`flex rounded-xl border p-1 ${theme.glass}`}>
-                    <button onClick={() => setSearchFilter("ANIME")} className={`flex-1 py-2 text-[8px] uppercase tracking-widest rounded-lg ${searchFilter === 'ANIME' ? 'bg-[#E6C35C] text-black font-bold' : 'opacity-40'}`}>Motion</button>
-                    <button onClick={() => setSearchFilter("MANGA")} className={`flex-1 py-2 text-[8px] uppercase tracking-widest rounded-lg ${searchFilter === 'MANGA' ? 'bg-[#E6C35C] text-black font-bold' : 'opacity-40'}`}>Ink</button>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     {data.map(item => (
