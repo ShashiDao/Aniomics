@@ -8,7 +8,6 @@ import {
   Plus, Bookmark, Play, BookOpen
 } from 'lucide-react';
 
-// --- SHARED COMPONENTS ---
 const Atmosphere = ({ phase }) => (
   <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
     <div className={`absolute inset-0 transition-opacity duration-1000 ${phase === 'night' ? 'bg-[#050505]/95' : 'bg-[#DCD4B8]/50'}`} />
@@ -23,15 +22,34 @@ export default function App() {
   const [isSanctifying, setIsSanctifying] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [openFaq, setOpenFaq] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // Detect if running as Installed App
   useEffect(() => {
+    // Detect if running as Installed App
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     setIsApp(isStandalone);
-    
-    // Auto-switch to night mode for the app
     if (isStandalone) setPhase('night');
+
+    // Listen for install prompt
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setDeferredPrompt(null);
+    } else {
+      // Prompt hasn't fired yet or iOS
+      alert("To Install: \n1. Tap 'Share' or 'Menu'\n2. Choose 'Add to Home Screen'");
+    }
+  };
 
   const isNight = phase === 'night';
   const theme = {
@@ -53,10 +71,9 @@ export default function App() {
       <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col font-sans transition-colors duration-700`}>
         <Atmosphere phase={phase} />
         
-        {/* App Header */}
         <header className="fixed top-0 w-full p-5 flex justify-between items-center z-[100] backdrop-blur-xl border-b border-white/5">
           <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full border border-[#E6C35C]/40 overflow-hidden p-0.5 shadow-lg shadow-[#E6C35C]/10">
+             <div className="h-8 w-8 rounded-full border border-[#E6C35C]/40 overflow-hidden p-0.5 shadow-lg">
                <img src={logo} className="h-full w-full object-cover rounded-full" alt="L" />
              </div>
              <span className="font-serif uppercase tracking-[0.3em] text-[10px] font-black text-[#E6C35C]">Sanctuary</span>
@@ -67,24 +84,19 @@ export default function App() {
         </header>
 
         <main className="flex-1 pt-24 px-6 pb-32 space-y-8 z-10">
-          {/* Quick Sanctify Search */}
           <div className={`p-1.5 rounded-full border ${theme.card} shadow-2xl backdrop-blur-2xl flex items-center`}>
             <div className="pl-4 pr-2 opacity-30"><Search size={16} /></div>
             <input 
               placeholder="Paste scroll link to sanctify..." 
-              className="bg-transparent flex-1 outline-none text-xs font-medium placeholder:opacity-20"
+              className="bg-transparent flex-1 outline-none text-xs font-medium"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
             />
-            <button 
-              onClick={handleSanctify}
-              className="h-9 w-9 bg-[#E6C35C] rounded-full flex items-center justify-center text-black shadow-lg"
-            >
+            <button onClick={handleSanctify} className="h-9 w-9 bg-[#E6C35C] rounded-full flex items-center justify-center text-black shadow-lg">
               {isSanctifying ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
             </button>
           </div>
 
-          {/* Library Grid */}
           <section>
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-[10px] uppercase tracking-[0.4em] font-black opacity-40">Your Library</h2>
@@ -94,11 +106,10 @@ export default function App() {
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className={`aspect-[2/3] rounded-2xl border ${theme.card} relative overflow-hidden group shadow-xl`}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 scale-75 group-hover:scale-100 group-hover:opacity-30 transition-all">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-30 transition-all">
                     <Plus size={32} />
                   </div>
                   <div className="absolute bottom-4 left-4 right-4">
-                    <div className="h-1 w-8 bg-[#E6C35C] rounded-full mb-2" />
                     <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Empty Slot</p>
                   </div>
                 </div>
@@ -106,24 +117,13 @@ export default function App() {
             </div>
           </section>
 
-          {/* Quick Actions */}
           <section className="grid grid-cols-3 gap-3">
-             <button className={`p-4 rounded-2xl border ${theme.card} flex flex-col items-center gap-2`}>
-                <Bookmark size={18} className="text-[#E6C35C]" />
-                <span className="text-[8px] font-bold uppercase tracking-widest">Saved</span>
-             </button>
-             <button className={`p-4 rounded-2xl border ${theme.card} flex flex-col items-center gap-2`}>
-                <Play size={18} className="text-[#E6C35C]" />
-                <span className="text-[8px] font-bold uppercase tracking-widest">Watching</span>
-             </button>
-             <button className={`p-4 rounded-2xl border ${theme.card} flex flex-col items-center gap-2`}>
-                <BookOpen size={18} className="text-[#E6C35C]" />
-                <span className="text-[8px] font-bold uppercase tracking-widest">Reading</span>
-             </button>
+             <button className={`p-4 rounded-2xl border ${theme.card} flex flex-col items-center gap-2`}><Bookmark size={18} className="text-[#E6C35C]" /><span className="text-[8px] font-bold uppercase">Saved</span></button>
+             <button className={`p-4 rounded-2xl border ${theme.card} flex flex-col items-center gap-2`}><Play size={18} className="text-[#E6C35C]" /><span className="text-[8px] font-bold uppercase">Watching</span></button>
+             <button className={`p-4 rounded-2xl border ${theme.card} flex flex-col items-center gap-2`}><BookOpen size={18} className="text-[#E6C35C]" /><span className="text-[8px] font-bold uppercase">Reading</span></button>
           </section>
         </main>
 
-        {/* --- BOTTOM NAVIGATION BAR --- */}
         <nav className="fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-2xl border-t border-white/5 px-8 flex justify-around items-center z-[200]">
           {[
             { id: 'home', icon: LayoutGrid, label: 'Portal' },
@@ -134,11 +134,11 @@ export default function App() {
             <button 
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === item.id ? 'text-[#E6C35C] scale-110' : 'opacity-30 hover:opacity-50'}`}
+              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === item.id ? 'text-[#E6C35C] scale-110' : 'opacity-30'}`}
             >
-              <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 1.5} />
+              <item.icon size={20} />
               <span className="text-[7px] font-black uppercase tracking-[0.2em]">{item.label}</span>
-              {activeTab === item.id && <div className="h-1 w-1 bg-[#E6C35C] rounded-full shadow-[0_0_8px_#E6C35C]" />}
+              {activeTab === item.id && <div className="h-1 w-1 bg-[#E6C35C] rounded-full" />}
             </button>
           ))}
         </nav>
@@ -148,7 +148,7 @@ export default function App() {
 
   // --- UI: THE PORTAL (Web Gateway) ---
   return (
-    <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col font-sans transition-colors duration-1000 relative overflow-x-hidden`}>
+    <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col font-sans relative overflow-x-hidden`}>
       <Atmosphere phase={phase} />
       
       <nav className="fixed top-0 w-full h-16 px-6 flex items-center justify-between z-[100] backdrop-blur-xl border-b border-current/5">
@@ -171,8 +171,8 @@ export default function App() {
         <h1 className="text-4xl md:text-6xl font-serif uppercase tracking-tight leading-[1.1] mb-6">
           The Sanctuary <br /><span className="text-[#E6C35C]">For Every Story</span>
         </h1>
-        <p className="max-w-xs text-[11px] opacity-40 leading-relaxed uppercase tracking-widest font-medium mb-12">
-          Experience clean storytelling. No ads. No trackers. Just pure aesthetic immersion.
+        <p className="max-w-xs text-[11px] opacity-40 leading-relaxed uppercase tracking-widest mb-12">
+          Experience clean storytelling. No ads. No trackers.
         </p>
         
         <form onSubmit={handleSanctify} className="w-full max-w-md relative mb-24 px-4">
@@ -184,28 +184,24 @@ export default function App() {
               placeholder="Paste scroll link to enter..." 
               className="bg-transparent flex-1 outline-none text-[13px] px-4 font-sans placeholder:opacity-30"
             />
-            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90">
+            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center">
               {isSanctifying ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
             </button>
           </div>
         </form>
       </header>
 
-      {/* FAQ Section */}
       <section className="px-6 py-12 max-w-md mx-auto w-full z-10 mb-32">
          <h2 className="text-center text-[10px] uppercase font-black tracking-[0.4em] text-[#E6C35C] mb-8">Scrolls of Inquiry</h2>
          <div className="space-y-3">
             {[
-              { q: "What is Sanctifying?", a: "Stripping invasive ads and re-rendering content in our aesthetic shell." },
-              { q: "Is it truly free?", a: "The gates of Aniomics are open to all seekers of clean stories." }
+              { q: "What is Sanctifying?", a: "Stripping ads and re-rendering in our shell." },
+              { q: "Is it truly free?", a: "The gates of Aniomics are open to all." }
             ].map((f, i) => (
               <div key={i} className={`rounded-2xl border ${theme.card} overflow-hidden`}>
-                <button 
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full p-5 flex justify-between items-center text-left"
-                >
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{f.q}</span>
-                  <ChevronDown size={14} className={`transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full p-5 flex justify-between items-center text-left">
+                  <span className="text-[10px] font-bold uppercase">{f.q}</span>
+                  <ChevronDown size={14} className={`${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 {openFaq === i && <div className="px-5 pb-5 text-[10px] opacity-50 border-t border-white/5 pt-4">{f.a}</div>}
               </div>
@@ -213,25 +209,23 @@ export default function App() {
          </div>
       </section>
 
-      {/* Install Button Footer */}
+      {/* --- ADDED onClick HERE --- */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[160px] px-2">
-        <button className="w-full h-11 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all">
+        <button 
+          onClick={handleInstallClick} 
+          className="w-full h-11 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all"
+        >
           <div className="flex items-center gap-2">
              <div className="h-8 w-8 bg-[#E6C35C] rounded-full flex items-center justify-center p-1.5">
                <img src={logo} className="h-full w-full object-cover brightness-0" alt="" />
              </div>
-             <span className="text-white text-[10px] font-black uppercase tracking-widest">Get App</span>
+             <span className="text-white text-[10px] font-black uppercase">Get App</span>
           </div>
           <ArrowRight className="text-white/40" size={12} />
         </button>
       </div>
 
       <footer className="mt-auto py-12 border-t border-white/5 flex flex-col items-center opacity-40">
-        <div className="flex gap-6 mb-8">
-          <TelegramIcon size={18} />
-          <MessageCircle size={18} />
-          <Mail size={18} />
-        </div>
         <p className="text-[8px] uppercase tracking-[0.5em] font-black text-[#E6C35C]">support@aniomics.art</p>
       </footer>
     </div>
