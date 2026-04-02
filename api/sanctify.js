@@ -5,22 +5,21 @@ export default async function handler(req, res) {
   try {
     const targetUrl = new URL(url);
 
-    // --- 1. SPECIAL CASE: MANGADEX (The most reliable) ---
+    // --- 1. MANGADEX OFFICIAL API LOGIC ---
     if (targetUrl.hostname.includes('mangadex.org')) {
-      const chapterId = url.split('/').pop();
-      const dexRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
-      const dexData = await dexRes.json();
+      const chapterId = url.split('/').filter(Boolean).pop();
+      const serverRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
+      const serverData = await serverRes.json();
       
-      if (dexData.chapter) {
-        const hash = dexData.chapter.hash;
-        const images = dexData.chapter.data.map(img => 
-          `https://uploads.mangadex.org/data/${hash}/${img}`
-        );
+      if (serverData.chapter) {
+        const { baseUrl, hash, data } = serverData.chapter;
+        // Construct correct URLs using the baseUrl provided by the API
+        const images = data.map(img => `${baseUrl}/data/${hash}/${img}`);
         return res.status(200).json({ success: true, images });
       }
     }
 
-    // --- 2. UNIVERSAL SCRAPER (For other sites) ---
+    // --- 2. UNIVERSAL SCRAPER FALLBACK ---
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -29,8 +28,6 @@ export default async function handler(req, res) {
     });
 
     const html = await response.text();
-    
-    // Look for anything that resembles an image list in JSON or HTML
     const imgRegex = /(?:src|data-src|data-lazy|data-original)=["']([^"']+\.(?:jpg|jpeg|png|webp))["']/gi;
     let images = [];
     let match;
@@ -41,15 +38,16 @@ export default async function handler(req, res) {
       images.push(src);
     }
 
-    const finalImages = [...new Set(images)].filter(img => !/logo|avatar|icon|banner|ads/i.test(img));
+    // Filter out credits and logos
+    const finalImages = [...new Set(images)].filter(img => 
+      !/logo|avatar|icon|banner|ads|external|credit/i.test(img)
+    );
 
-    if (finalImages.length < 5) {
-      return res.status(200).json({ success: false, message: "Cloudflare or Bot protection blocked the ritual." });
-    }
+    if (finalImages.length < 3) return res.status(200).json({ success: false });
 
     res.status(200).json({ success: true, images: finalImages });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: "Connection lost." });
+    res.status(500).json({ success: false });
   }
 }
