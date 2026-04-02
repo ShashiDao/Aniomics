@@ -1,25 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
 import { 
   Library, Sparkles, Smartphone, 
   Moon, Sun, Wand2, Globe, Loader2,
-  Trophy, Star, Users, Zap, ShieldCheck
+  Trophy, Star, Users, Zap, ShieldCheck,
+  MessageCircle, Send as TelegramIcon, Mail
 } from 'lucide-react';
-
-// --- CONFIGURATION ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBlPdWgHqNAfxQ3sot8hRGdY1SomzsPOlk",
-  authDomain: "excel-gam-zon.firebaseapp.com",
-  projectId: "excel-gam-zon",
-  storageBucket: "excel-gam-zon.firebasestorage.app",
-  messagingSenderId: "849616610846",
-  appId: "1:849616610846:web:cada0d004958ec3862700f",
-  measurementId: "G-8Q6W427J8R"
-};
-
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 const RANKS = [
   { title: 'Wanderer', desc: 'Lost in the void', color: 'text-white/40' },
@@ -50,11 +35,21 @@ export default function App() {
     accent: '#E6C35C'
   };
 
+  const handleSanctify = (e) => {
+    e.preventDefault();
+    if (!urlInput) return;
+    setIsSanctifying(true);
+    setTimeout(() => {
+      setIsSanctifying(false);
+      setUrlInput("");
+    }, 2000);
+  };
+
   return (
-    <div className={`min-h-screen w-full ${theme.bg} ${theme.text} transition-colors duration-1000 flex flex-col font-sans overflow-x-hidden pb-20`}>
+    <div className={`min-h-screen w-full ${theme.bg} ${theme.text} transition-colors duration-1000 flex flex-col font-sans overflow-x-hidden pb-10`}>
       <Atmosphere phase={phase} />
 
-      {/* --- NAVIGATION --- */}
+      {/* NAVIGATION */}
       <nav className="fixed top-0 left-0 right-0 h-16 px-6 flex items-center justify-between z-[100] backdrop-blur-xl border-b border-current/5">
         <div className="flex items-center gap-2">
           <Library size={24} className="text-[#E6C35C]" />
@@ -65,7 +60,7 @@ export default function App() {
         </button>
       </nav>
 
-      {/* --- HERO SECTION --- */}
+      {/* HERO SECTION */}
       <header className="pt-32 pb-16 px-6 flex flex-col items-center text-center z-10">
         <div className="flex items-center gap-2 mb-4 text-[#E6C35C] animate-pulse">
           <Sparkles size={12} />
@@ -81,7 +76,7 @@ export default function App() {
         </p>
 
         {/* SANCTIFIER BAR */}
-        <div className="w-full max-w-md relative mb-12">
+        <form onSubmit={handleSanctify} className="w-full max-w-md relative mb-12">
           <div className={`flex items-center p-1.5 rounded-full border ${isNight ? 'bg-black/40 border-white/10' : 'bg-white/40 border-black/10'} backdrop-blur-xl`}>
             <input 
               type="text" 
@@ -91,16 +86,16 @@ export default function App() {
               className="bg-transparent flex-1 outline-none text-[13px] px-4 font-sans placeholder:opacity-30"
             />
             <button 
-              onClick={() => { setIsSanctifying(true); setTimeout(() => setIsSanctifying(false), 2000); }}
+              type="submit"
               className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center active:scale-90 transition-transform"
             >
               {isSanctifying ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
             </button>
           </div>
-        </div>
+        </form>
       </header>
 
-      {/* --- ASCENSION PATH (NEW) --- */}
+      {/* ASCENSION PATH */}
       <section className="px-6 py-10 z-10">
         <div className="flex items-center gap-2 mb-8 justify-center opacity-40 uppercase text-[9px] tracking-[0.3em] font-bold">
           <Trophy size={14} />
@@ -118,8 +113,8 @@ export default function App() {
         </div>
       </section>
 
-      {/* --- SOUL PULSE (NEW) --- */}
-      <section className="px-10 py-16 z-10">
+      {/* SOUL PULSE */}
+      <section className="px-8 py-10 z-10 max-w-md mx-auto">
         <div className={`p-8 rounded-[2.5rem] border ${isNight ? 'bg-white/5 border-white/5' : 'bg-black/5 border-black/10'} text-center space-y-6`}>
            <div className="flex justify-center gap-12">
               <div className="flex flex-col items-center">
@@ -133,23 +128,52 @@ export default function App() {
                  <span className="text-[8px] uppercase opacity-40 font-bold">Cleansed</span>
               </div>
            </div>
-           <div className="h-[1px] w-full bg-current opacity-5" />
-           <p className="text-[10px] leading-relaxed opacity-60">The Sanctuary is alive. Join the global resonance and experience stories as they were meant to be.</p>
+           <p className="text-[10px] leading-relaxed opacity-60">The Sanctuary is alive. Join the global resonance.</p>
         </div>
       </section>
 
-      {/* --- FINAL CTA --- */}
-      <section className="px-6 py-10 text-center z-10 flex flex-col items-center gap-6">
-          <button className="w-full max-w-xs h-14 bg-[#E6C35C] text-black rounded-2xl flex items-center justify-center gap-3 font-black uppercase text-[11px] tracking-widest shadow-[0_10px_30px_rgba(230,195,92,0.3)] active:scale-95 transition-all">
-            <Smartphone size={18} />
-            Enter the Sanctuary App
-          </button>
-          <div className="flex items-center gap-2 opacity-30 text-[9px] font-bold uppercase">
-             <ShieldCheck size={12} />
-             <span>Zero Intrusive Ads. Forever.</span>
-          </div>
+      {/* COMMUNITY LINKS SECTION */}
+      <section className="px-6 py-12 z-10 flex flex-col items-center gap-8">
+        <div className="text-center">
+          <h3 className="text-lg font-serif uppercase tracking-widest mb-2">Join the Coven</h3>
+          <p className="text-[9px] uppercase opacity-40 tracking-widest">Connect with other seekers</p>
+        </div>
+        
+        <div className="flex gap-4 w-full max-w-xs">
+          <a href="https://discord.gg/5FHVw9wDfh" target="_blank" rel="noreferrer" className="flex-1 flex flex-col items-center gap-2 p-4 rounded-2xl border border-current/10 bg-white/5 hover:bg-[#E6C35C] hover:text-black transition-all group">
+            <MessageCircle size={20} />
+            <span className="text-[8px] uppercase font-bold tracking-tighter">Discord</span>
+          </a>
+          <a href="https://t.me/AniOmics" target="_blank" rel="noreferrer" className="flex-1 flex flex-col items-center gap-2 p-4 rounded-2xl border border-current/10 bg-white/5 hover:bg-[#E6C35C] hover:text-black transition-all">
+            <TelegramIcon size={20} />
+            <span className="text-[8px] uppercase font-bold tracking-tighter">Telegram</span>
+          </a>
+        </div>
+
+        <button className="w-full max-w-xs h-14 bg-[#E6C35C] text-black rounded-2xl flex items-center justify-center gap-3 font-black uppercase text-[11px] tracking-widest shadow-xl active:scale-95 transition-all">
+          <Smartphone size={18} />
+          Download App
+        </button>
       </section>
 
+      {/* FOOTER */}
+      <footer className="mt-auto py-8 border-t border-current/5 flex flex-col items-center gap-6 z-10 bg-black/20 backdrop-blur-sm">
+         <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 opacity-30">
+               <Library size={14} />
+               <span className="text-[9px] uppercase tracking-[0.2em] font-bold">Aniomics Sanctuary</span>
+            </div>
+            <a href="mailto:support@aniomics.art" className="flex items-center gap-2 text-[10px] opacity-60 hover:text-[#E6C35C] transition-colors">
+               <Mail size={12} />
+               support@aniomics.art
+            </a>
+         </div>
+         <div className="flex gap-6 opacity-30 text-[8px] uppercase font-bold tracking-widest">
+            <a href="https://discord.gg/5FHVw9wDfh">Discord</a>
+            <a href="https://t.me/AniOmics">Telegram</a>
+            <span>Privacy Scrolls</span>
+         </div>
+      </footer>
     </div>
   );
 }
