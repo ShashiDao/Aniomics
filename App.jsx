@@ -42,7 +42,7 @@ const DAILY_QUESTS = [
 // --- ATMOSPHERE COMPONENT ---
 const Atmosphere = ({ phase, color }) => {
   const isNight = phase === 'night';
-  const count = isNight ? 80 : 50; // More drops for rain, fewer motes for sand
+  const count = isNight ? 80 : 50;
 
   const particles = useMemo(() => Array.from({ length: count }).map((_, i) => ({
     id: i,
@@ -116,7 +116,8 @@ export default function App() {
   const theme = {
     bg: isNight ? 'bg-[#050505]' : 'bg-[#F3E5AB]',
     text: isNight ? 'text-[#F3E5AB]' : 'text-[#402615]',
-    subText: isNight ? 'text-white/50' : 'text-black/40',
+    // FIXED: Subtext now uses a much darker opacity for Day Mode to ensure visibility
+    subText: isNight ? 'text-white/40' : 'text-[#402615]/60', 
     glass: isNight ? 'bg-white/5 border-[#F3E5AB]/20 shadow-2xl' : 'bg-black/5 border-[#402615]/20 shadow-2xl',
     accent: isNight ? 'text-[#E6C35C]' : 'text-[#8B5E3C]',
     particle: isNight ? '#F3E5AB' : '#8B5E3C'
@@ -177,9 +178,9 @@ export default function App() {
   const toggleLibrarian = () => {
     if (!libOpen) {
       const dialogues = {
-        hall: [`Greetings ${profile.name}. The Sanctuary shifts.`, "Can you hear the atmosphere change?", `Archon Level ${currentRank.id} detected.`],
-        search: ["Search the void.", "Truth is hidden in plain sight."],
-        sanctum: ["Your collection is safe."]
+        hall: [`The atmosphere is heavy today, ${profile.name}.`, "I've recalibrated the view for your comfort.", "Notice the shifting sands, Archon."],
+        search: ["The scrolls reveal themselves in time.", "Precision is the key to discovery."],
+        sanctum: ["Your sanctum is a place of peace."]
       };
       const pool = dialogues[activeTab] || dialogues.hall;
       setLibMsg(pool[Math.floor(Math.random() * pool.length)]);
@@ -190,7 +191,7 @@ export default function App() {
   const MenuIcon = ({ icon: Icon, label, onClick }) => (
     <div onClick={onClick} className={`flex flex-col items-center justify-center gap-3 p-4 border rounded-2xl transition-all active:scale-90 cursor-pointer ${theme.glass}`}>
       <Icon size={24} className={theme.accent} />
-      <span className="text-[8px] tracking-widest uppercase font-serif font-bold text-center">{label}</span>
+      <span className={`text-[8px] tracking-widest uppercase font-serif font-bold text-center ${theme.text}`}>{label}</span>
     </div>
   );
 
@@ -199,19 +200,8 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
         
-        @keyframes rain {
-          0% { transform: translateY(-100%); opacity: 0; }
-          50% { opacity: 0.5; }
-          100% { transform: translateY(110vh); opacity: 0; }
-        }
-        
-        @keyframes sandstorm {
-          0% { transform: translateX(-10vw) translateY(0); opacity: 0; }
-          20% { opacity: 0.3; }
-          80% { opacity: 0.3; }
-          100% { transform: translateX(110vw) translateY(20px); opacity: 0; }
-        }
-
+        @keyframes rain { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(110vh); opacity: 0; } }
+        @keyframes sandstorm { 0% { transform: translateX(-10vw) translateY(0); opacity: 0; } 20% { opacity: 0.3; } 80% { opacity: 0.3; } 100% { transform: translateX(110vw) translateY(20px); opacity: 0; } }
         @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.08); opacity: 1; } }
 
@@ -229,11 +219,11 @@ export default function App() {
       <div className="fixed top-6 left-6 right-6 z-[60] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Library size={24} className={theme.accent} />
-          <span className="text-[10px] tracking-[0.3em] font-serif font-bold opacity-80 uppercase">Aniomics</span>
+          <span className={`text-[10px] tracking-[0.3em] font-serif font-bold uppercase ${theme.text} opacity-80`}>Aniomics</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm opacity-80`}>
+          <button onClick={() => setPhase(isNight ? 'day' : 'night')} className={`p-2.5 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-sm`}>
             {isNight ? <Moon size={14} className="animate-pulse" /> : <Sun size={14} className="animate-spin-slow" />}
           </button>
           <button onClick={() => setIsMenuOpen(true)} className={`p-3 rounded-full border backdrop-blur-xl ${theme.glass} active:scale-90 shadow-lg`}>
@@ -246,8 +236,8 @@ export default function App() {
       {isMenuOpen && (
         <div className={`fixed inset-0 z-[200] backdrop-blur-3xl animate-in fade-in zoom-in duration-300 flex flex-col p-8 ${isNight ? 'bg-black/90' : 'bg-[#F3E5AB]/95'}`}>
           <div className="flex justify-between items-center mb-10">
-            <h2 className="text-2xl font-serif tracking-widest uppercase text-center w-full">Archon's Tools</h2>
-            <button onClick={() => setIsMenuOpen(false)} className="p-2 opacity-50 absolute right-8"><X size={28} /></button>
+            <h2 className={`text-2xl font-serif tracking-widest uppercase text-center w-full ${theme.text}`}>Archon's Tools</h2>
+            <button onClick={() => setIsMenuOpen(false)} className={`p-2 absolute right-8 ${theme.text} opacity-50`}><X size={28} /></button>
           </div>
           
           <div className="grid grid-cols-3 gap-3 mb-8">
@@ -262,8 +252,8 @@ export default function App() {
           <div className={`mt-auto p-5 border rounded-2xl ${theme.glass} flex items-center justify-center gap-4`}>
              <Star size={20} className={theme.accent} />
              <div className="text-center">
-               <p className="text-[8px] tracking-widest uppercase opacity-40">Current Patron</p>
-               <p className="text-md font-serif tracking-widest">{profile.name}</p>
+               <p className={`text-[8px] tracking-widest uppercase ${theme.subText}`}>Current Patron</p>
+               <p className={`text-md font-serif tracking-widest ${theme.text}`}>{profile.name}</p>
              </div>
           </div>
         </div>
@@ -273,11 +263,11 @@ export default function App() {
       {stage === 'active' && !isMenuOpen && (
         <div className="fixed bottom-28 left-6 z-[100] flex items-end gap-3 pointer-events-none">
           <button onClick={toggleLibrarian} className={`pointer-events-auto p-4 rounded-full border backdrop-blur-3xl animate-breathe ${theme.glass} ${libOpen ? 'border-[#E6C35C]' : ''}`}>
-            <Wand2 size={22} className={libOpen ? 'text-[#E6C35C]' : 'opacity-60'} />
+            <Wand2 size={22} className={libOpen ? 'text-[#E6C35C]' : `opacity-60 ${theme.text}`} />
           </button>
           {libOpen && (
             <div className={`pointer-events-auto p-4 rounded-2xl border backdrop-blur-3xl max-w-[180px] animate-in slide-in-from-left-4 fade-in duration-500 mb-2 ${theme.glass}`}>
-              <p className="text-[10px] font-serif tracking-widest leading-relaxed italic"><Typewriter text={libMsg} /></p>
+              <p className={`text-[10px] font-serif tracking-widest leading-relaxed italic ${theme.text}`}><Typewriter text={libMsg} /></p>
             </div>
           )}
         </div>
@@ -285,12 +275,12 @@ export default function App() {
 
       <div className="z-10 w-full h-full max-w-lg flex flex-col relative pb-24">
         {stage === 'entrance' ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 animate-in fade-in duration-1000">
+          <div className="flex-1 flex flex-col items-center justify-center p-6">
             <div className={`border rounded-t-full pt-20 pb-12 px-10 backdrop-blur-xl ${theme.glass} text-center`}>
               <Library size={56} className="text-[#E6C35C] mb-6 mx-auto" />
-              <h1 className="text-4xl tracking-[0.3em] font-serif font-semibold">ANIOMICS</h1>
-              <p className="text-[10px] tracking-[0.4em] uppercase opacity-40 mt-6 mb-12">The Grand Library</p>
-              <button onClick={handleRitual} className={`px-8 py-4 border rounded-sm text-[10px] tracking-widest uppercase font-serif hover:bg-[#E6C35C] hover:text-[#050505] transition-all`}>Initiate Ritual</button>
+              <h1 className={`text-4xl tracking-[0.3em] font-serif font-semibold ${theme.text}`}>ANIOMICS</h1>
+              <p className={`text-[10px] tracking-[0.4em] uppercase ${theme.subText} mt-6 mb-12`}>The Grand Library</p>
+              <button onClick={handleRitual} className={`px-8 py-4 border rounded-sm text-[10px] tracking-widest uppercase font-serif hover:bg-[#E6C35C] hover:text-[#050505] transition-all ${theme.text}`}>Initiate Ritual</button>
             </div>
           </div>
         ) : (
@@ -302,10 +292,10 @@ export default function App() {
                   <Star size={10} className={currentRank.color} />
                   <span className={`text-[9px] tracking-widest font-bold uppercase ${currentRank.color}`}>{currentRank.title}</span>
                 </div>
-                <h2 className="text-xl tracking-[0.2em] uppercase">{profile.name}</h2>
+                <h2 className={`text-xl tracking-[0.2em] uppercase ${theme.text}`}>{profile.name}</h2>
                 <div className="mt-2">
-                  <p className="text-[8px] tracking-widest uppercase opacity-40 mb-1">Knowledge</p>
-                  <p className="text-sm text-[#E6C35C]">{profile.xp} <span className="opacity-30 text-[10px]">/ {nextRank.minXp}</span></p>
+                  <p className={`text-[8px] tracking-widest uppercase mb-1 font-bold ${theme.subText}`}>Knowledge</p>
+                  <p className={`text-sm ${theme.accent} font-bold`}>{profile.xp} <span className="opacity-30 text-[10px]">/ {nextRank.minXp}</span></p>
                 </div>
               </div>
               <div className="h-[2.5px] w-4/5 bg-current/10 rounded-full overflow-hidden mx-auto shadow-inner">
@@ -318,24 +308,24 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-4 pt-4 animate-in slide-in-from-bottom-4 duration-500">
                   <div onClick={() => { setChamberType("ANIME"); setSearchFilter("ANIME"); executeSearch("ANIME"); }} className={`h-64 rounded-t-full border p-6 flex flex-col items-center justify-end cursor-pointer transition-all hover:scale-[1.02] ${theme.glass}`}>
                     <Zap size={28} className="text-[#E6C35C] mb-4" />
-                    <h3 className="text-xl tracking-widest font-serif uppercase text-center">Motion</h3>
-                    <p className="text-[9px] opacity-40 tracking-widest uppercase text-center">Anime Archives</p>
+                    <h3 className={`text-xl tracking-widest font-serif uppercase text-center ${theme.text}`}>Motion</h3>
+                    <p className={`text-[9px] tracking-widest uppercase text-center font-bold ${theme.subText}`}>Anime Archives</p>
                   </div>
                   <div onClick={() => { setChamberType("MANGA"); setSearchFilter("MANGA"); executeSearch("MANGA"); }} className={`h-64 rounded-t-full border p-6 flex flex-col items-center justify-end cursor-pointer transition-all hover:scale-[1.02] ${theme.glass}`}>
                     <Scroll size={28} className="text-[#E6C35C] mb-4" />
-                    <h3 className="text-xl tracking-widest font-serif uppercase text-center">Ink</h3>
-                    <p className="text-[9px] opacity-40 tracking-widest uppercase text-center">Comic Archives</p>
+                    <h3 className={`text-xl tracking-widest font-serif uppercase text-center ${theme.text}`}>Ink</h3>
+                    <p className={`text-[9px] tracking-widest uppercase text-center font-bold ${theme.subText}`}>Comic Archives</p>
                   </div>
                 </div>
               )}
 
               {chamberType && (
                 <div className="animate-in fade-in duration-500 pb-10">
-                  <button onClick={() => setChamberType(null)} className="flex items-center gap-2 text-[9px] tracking-widest opacity-40 mb-6 font-serif uppercase">
+                  <button onClick={() => setChamberType(null)} className={`flex items-center gap-2 text-[9px] tracking-widest uppercase mb-6 font-serif ${theme.subText}`}>
                     <ChevronLeft size={14} /> Back to Hall
                   </button>
                   <div className="grid grid-cols-2 gap-4">
-                    {loading ? <Sparkles className="animate-pulse mx-auto col-span-2 py-20" /> : 
+                    {loading ? <Sparkles className={`animate-pulse mx-auto col-span-2 py-20 ${theme.accent}`} /> : 
                       data.map(item => (
                         <div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative group ${theme.glass}`}>
                           <img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" alt="c" />
@@ -351,33 +341,19 @@ export default function App() {
               {activeTab === 'search' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col gap-4">
                   <div className={`flex items-center gap-3 p-4 border rounded-2xl ${theme.glass}`}>
-                    <SearchIcon size={16} className="opacity-30" />
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executeSearch()} placeholder="SEARCH THE VOID..." className="bg-transparent border-none outline-none flex-1 text-[10px] tracking-widest uppercase font-serif placeholder:opacity-10" />
+                    <SearchIcon size={16} className={theme.subText} />
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executeSearch()} placeholder="SEARCH THE VOID..." className={`bg-transparent border-none outline-none flex-1 text-[10px] tracking-widest uppercase font-serif placeholder:${theme.subText}`} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     {data.map(item => (
                       <div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative ${theme.glass}`}>
                         <img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" alt="s" />
                         <div className={`absolute inset-0 p-3 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#F3E5AB]'} to-transparent`}>
-                          <p className="text-[8px] font-bold tracking-widest text-center uppercase line-clamp-1">{item.title.english || item.title.romaji}</p>
+                          <p className={`text-[8px] font-bold tracking-widest text-center uppercase line-clamp-1 ${theme.text}`}>{item.title.english || item.title.romaji}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {activeTab === 'forum' && (
-                <div className="py-20 text-center opacity-20 italic animate-in fade-in">
-                  <MessageSquare size={40} className="mx-auto mb-4" />
-                  <p className="text-[9px] tracking-widest uppercase">The community hall is currently silent</p>
-                </div>
-              )}
-
-              {activeTab === 'sanctum' && (
-                <div className="py-20 text-center opacity-20 italic animate-in fade-in">
-                  <BookMarked size={40} className="mx-auto mb-4" />
-                  <p className="text-[9px] tracking-widest uppercase">Your inner sanctum awaits its first scroll</p>
                 </div>
               )}
 
@@ -391,11 +367,11 @@ export default function App() {
                        return (
                          <div key={quest.id} className={`p-5 border rounded-sm ${theme.glass} ${isDone ? 'opacity-40' : ''}`}>
                            <div className="flex justify-between mb-2">
-                             <h4 className="text-xs tracking-widest uppercase font-serif">{quest.title}</h4>
+                             <h4 className={`text-xs tracking-widest uppercase font-serif ${theme.text}`}>{quest.title}</h4>
                              <span className={`text-[9px] ${theme.accent}`}>+{quest.xp} XP</span>
                            </div>
                            <p className={`text-[9px] leading-relaxed mb-4 ${theme.subText}`}>{quest.desc}</p>
-                           {!isDone && <button onClick={() => handleQuestCompletion(quest.id, quest.xp)} className="w-full py-2.5 border text-[9px] tracking-widest uppercase">Claim</button>}
+                           {!isDone && <button onClick={() => handleQuestCompletion(quest.id, quest.xp)} className={`w-full py-2.5 border text-[9px] tracking-widest uppercase ${theme.text}`}>Claim</button>}
                          </div>
                        )
                      })}
@@ -409,13 +385,26 @@ export default function App() {
 
       {/* BOTTOM NAV */}
       <nav className={`fixed bottom-6 left-6 right-6 h-16 border rounded-full backdrop-blur-3xl z-[90] flex items-center justify-around px-4 transition-all duration-1000 ${theme.glass} shadow-xl`}>
-        <button onClick={() => { setActiveTab('hall'); setChamberType(null); }} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'hall' ? theme.accent : 'opacity-40'}`}><Home size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Hall</span></button>
-        <button onClick={() => setActiveTab('search')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'search' ? theme.accent : 'opacity-40'}`}><SearchIcon size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Search</span></button>
-        <button onClick={() => setActiveTab('forum')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'forum' ? theme.accent : 'opacity-40'}`}><MessageSquare size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Forum</span></button>
-        <button onClick={() => setActiveTab('sanctum')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'sanctum' ? theme.accent : 'opacity-40'}`}><BookMarked size={20} /><span className="text-[7px] uppercase font-bold tracking-tighter">Sanctum</span></button>
+        <button onClick={() => { setActiveTab('hall'); setChamberType(null); }} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'hall' ? theme.accent : `opacity-40 ${theme.subText}`}`}>
+          <Home size={20} />
+          <span className={`text-[7px] uppercase font-bold tracking-tighter ${activeTab === 'hall' ? '' : theme.subText}`}>Hall</span>
+        </button>
+        <button onClick={() => setActiveTab('search')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'search' ? theme.accent : `opacity-40 ${theme.subText}`}`}>
+          <SearchIcon size={20} />
+          <span className={`text-[7px] uppercase font-bold tracking-tighter ${activeTab === 'search' ? '' : theme.subText}`}>Search</span>
+        </button>
+        <button onClick={() => setActiveTab('forum')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'forum' ? theme.accent : `opacity-40 ${theme.subText}`}`}>
+          <MessageSquare size={20} />
+          <span className={`text-[7px] uppercase font-bold tracking-tighter ${activeTab === 'forum' ? '' : theme.subText}`}>Forum</span>
+        </button>
+        <button onClick={() => setActiveTab('sanctum')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'sanctum' ? theme.accent : `opacity-40 ${theme.subText}`}`}>
+          <BookMarked size={20} />
+          <span className={`text-[7px] uppercase font-bold tracking-tighter ${activeTab === 'sanctum' ? '' : theme.subText}`}>Sanctum</span>
+        </button>
       </nav>
       
     </div>
   );
 }
+
 
