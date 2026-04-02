@@ -30,9 +30,9 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const RANKS = [
   { id: 1, title: 'Wanderer', minXp: 0, color: 'text-white/40', bar: 'bg-white/40' },
-  { id: 2, title: 'Initiate', minXp: 100, color: 'text-[#F3E5AB]/60', bar: 'bg-[#F3E5AB]/60' },
-  { id: 3, title: 'Seeker', minXp: 500, color: 'text-[#F3E5AB]/80', bar: 'bg-[#F3E5AB]/80' },
-  { id: 4, title: 'Scholar', minXp: 1500, color: 'text-[#F3E5AB]', bar: 'bg-[#F3E5AB]' },
+  { id: 2, title: 'Initiate', minXp: 100, color: 'text-[#E6C35C]/60', bar: 'bg-[#E6C35C]/60' },
+  { id: 3, title: 'Seeker', minXp: 500, color: 'text-[#E6C35C]/80', bar: 'bg-[#E6C35C]/80' },
+  { id: 4, title: 'Scholar', minXp: 1500, color: 'text-[#E6C35C]', bar: 'bg-[#E6C35C]' },
   { id: 5, title: 'Arch-Librarian', minXp: 5000, color: 'text-[#E6C35C]', bar: 'bg-[#E6C35C]' }
 ];
 
@@ -51,7 +51,7 @@ const Atmosphere = ({ phase, color }) => {
     top: `${Math.random() * 100}%`,
     duration: isNight ? `${Math.random() * 0.4 + 0.3}s` : `${Math.random() * 15 + 5}s`,
     delay: `${Math.random() * 5}s`,
-    opacity: Math.random() * 0.3 + 0.1,
+    opacity: isNight ? Math.random() * 0.3 + 0.1 : Math.random() * 0.2 + 0.05,
     size: isNight ? '1px' : `${Math.random() * 3 + 1}px`,
     height: isNight ? `${Math.random() * 30 + 10}px` : `${Math.random() * 3 + 1}px`,
   })), [phase]);
@@ -60,7 +60,7 @@ const Atmosphere = ({ phase, color }) => {
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {particles.map(p => (
         <div key={p.id} className={`absolute transition-colors duration-1000 ${isNight ? 'animate-rain' : 'animate-sandstorm'}`}
-          style={{ backgroundColor: color, left: p.left, top: isNight ? '-40px' : p.top, width: p.size, height: p.height, opacity: p.opacity, animationDuration: p.duration, animationDelay: p.delay, filter: !isNight ? 'blur(1px)' : 'none', boxShadow: isNight ? 'none' : `0 0 8px ${color}` }} />
+          style={{ backgroundColor: color, left: p.left, top: isNight ? '-40px' : p.top, width: p.size, height: p.height, opacity: p.opacity, animationDuration: p.duration, animationDelay: p.delay, filter: !isNight ? 'blur(1px)' : 'none' }} />
       ))}
     </div>
   );
@@ -68,7 +68,7 @@ const Atmosphere = ({ phase, color }) => {
 
 // --- AI LIBRARIAN LOGIC ---
 const callGemini = async (prompt, userProfile) => {
-  if (!GEMINI_API_KEY) return "The Archivist is silent. Please ensure the celestial key is inscribed in Vercel settings.";
+  if (!GEMINI_API_KEY) return "The Archivist is silent. Please ensure the celestial key is inscribed in settings.";
   
   const sys = `You are "The Archivist", a mystical AI Librarian. Speak poetically and briefly. User: ${userProfile.name}, Rank: ${userProfile.title}. Refer to titles as scrolls.`;
   try {
@@ -104,12 +104,13 @@ export default function App() {
 
   const isNight = phase === 'night';
   const theme = {
-    bg: isNight ? 'bg-[#050505]' : 'bg-[#F3E5AB]',
-    text: isNight ? 'text-[#F3E5AB]' : 'text-[#402615]',
-    subText: isNight ? 'text-white/40' : 'text-[#402615]/70',
-    glass: isNight ? 'bg-white/5 border-[#F3E5AB]/20 shadow-2xl' : 'bg-black/5 border-[#402615]/20 shadow-2xl',
-    accent: isNight ? 'text-[#E6C35C]' : 'text-[#8B5E3C]',
-    particle: isNight ? '#F3E5AB' : '#8B5E3C'
+    // UPDATED: Muted Day mode colors to be easier on the eyes
+    bg: isNight ? 'bg-[#050505]' : 'bg-[#DCD4B8]', 
+    text: isNight ? 'text-[#F3E5AB]' : 'text-[#2D1F16]',
+    subText: isNight ? 'text-white/40' : 'text-[#2D1F16]/60',
+    glass: isNight ? 'bg-white/5 border-[#F3E5AB]/20 shadow-2xl' : 'bg-black/5 border-[#2D1F16]/10 shadow-2xl',
+    accent: isNight ? 'text-[#E6C35C]' : 'text-[#6B4E31]',
+    particle: isNight ? '#F3E5AB' : '#8B7355'
   };
 
   const currentRank = RANKS.slice().reverse().find(r => profile.xp >= r.minXp) || RANKS[0];
@@ -176,7 +177,7 @@ export default function App() {
       <style>{`
         @keyframes rain { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(110vh); opacity: 0; } }
         @keyframes sandstorm { 0% { transform: translateX(-10vw); opacity: 0; } 100% { transform: translateX(110vw); opacity: 0; } }
-        @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
         .animate-rain { animation: rain linear infinite; }
         .animate-sandstorm { animation: sandstorm linear infinite; }
         .animate-breathe { animation: breathe 3s ease-in-out infinite; }
@@ -201,7 +202,7 @@ export default function App() {
       </div>
 
       {isLibrarianOpen && (
-        <div className={`fixed inset-0 z-[220] backdrop-blur-3xl flex flex-col p-6 ${isNight ? 'bg-black/95' : 'bg-[#F3E5AB]/98'}`}>
+        <div className={`fixed inset-0 z-[220] backdrop-blur-3xl flex flex-col p-6 ${isNight ? 'bg-black/95' : 'bg-[#DCD4B8]/98'}`}>
           <div className="flex justify-between items-center mb-6 border-b pb-4 border-current/10">
             <h2 className="text-xl font-serif tracking-widest uppercase">The Archivist</h2>
             <button onClick={() => setIsLibrarianOpen(false)}><X size={32} /></button>
@@ -209,7 +210,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto hide-scrollbar flex flex-col gap-4 mb-6">
             {chatHistory.map((c, i) => (
               <div key={i} className={`flex ${c.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-4 rounded-2xl text-[11px] font-serif leading-relaxed ${c.role === 'user' ? 'bg-white/10 border border-current/20' : 'bg-black/5 border border-current/10'}`}>{c.content}</div>
+                <div className={`max-w-[80%] p-4 rounded-2xl text-[11px] font-serif leading-relaxed ${c.role === 'user' ? 'bg-black/10 border border-current/20' : 'bg-white/10 border border-current/10'}`}>{c.content}</div>
               </div>
             ))}
             {isTyping && <div className="p-4 rounded-2xl bg-white/5 w-12 flex justify-center"><Loader2 className="animate-spin" size={16} /></div>}
@@ -223,12 +224,15 @@ export default function App() {
       )}
 
       {isMenuOpen && (
-        <div className={`fixed inset-0 z-[200] backdrop-blur-3xl p-8 flex flex-col ${isNight ? 'bg-black/90' : 'bg-[#F3E5AB]/95'}`}>
+        <div className={`fixed inset-0 z-[200] backdrop-blur-3xl p-8 flex flex-col ${isNight ? 'bg-black/90' : 'bg-[#DCD4B8]/95'}`}>
           <div className="flex justify-between items-center mb-10"><h2 className="text-2xl font-serif tracking-widest uppercase text-center w-full">Archon's Tools</h2><button onClick={() => setIsMenuOpen(false)} className="absolute right-8"><X size={32} /></button></div>
           <div className="grid grid-cols-3 gap-4">
             <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Gamepad2 size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Trials</span></div>
             <div onClick={() => { setStage('quests'); setIsMenuOpen(false); }} className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass} cursor-pointer`}><Target size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Directives</span></div>
             <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Trophy size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Rankings</span></div>
+            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Wallet size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Essence</span></div>
+            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Gift size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Runes</span></div>
+            <div className={`p-6 border rounded-2xl flex flex-col items-center gap-3 transition-all active:scale-95 ${theme.glass}`}><Settings size={28} className={theme.accent} /><span className="text-[9px] uppercase font-bold text-center">Sanctuary</span></div>
           </div>
         </div>
       )}
@@ -248,8 +252,8 @@ export default function App() {
             <main className="flex-1 overflow-y-auto hide-scrollbar pb-10">
               {activeTab === 'hall' && !chamberType && (
                 <div className="grid grid-cols-2 gap-4 pt-6 animate-in slide-in-from-bottom-6">
-                  <div onClick={() => { setChamberType("ANIME"); executeSearch("ANIME"); }} className={`h-72 rounded-t-full border-2 p-8 flex flex-col items-center justify-end transition-all hover:scale-105 active:scale-95 ${theme.glass}`}><Zap size={36} className="text-[#E6C35C] mb-4" /><h3 className="text-xl font-serif uppercase">Motion</h3></div>
-                  <div onClick={() => { setChamberType("MANGA"); executeSearch("MANGA"); }} className={`h-72 rounded-t-full border-2 p-8 flex flex-col items-center justify-end transition-all hover:scale-105 active:scale-95 ${theme.glass}`}><Scroll size={36} className="text-[#E6C35C] mb-4" /><h3 className="text-xl font-serif uppercase">Ink</h3></div>
+                  <div onClick={() => { setChamberType("ANIME"); executeSearch("ANIME"); }} className={`h-72 rounded-t-full border-2 p-8 flex flex-col items-center justify-end transition-all hover:scale-105 active:scale-95 ${theme.glass}`}><Zap size={36} className={`${theme.accent} mb-4`} /><h3 className="text-xl font-serif uppercase">Motion</h3></div>
+                  <div onClick={() => { setChamberType("MANGA"); executeSearch("MANGA"); }} className={`h-72 rounded-t-full border-2 p-8 flex flex-col items-center justify-end transition-all hover:scale-105 active:scale-95 ${theme.glass}`}><Scroll size={36} className={`${theme.accent} mb-4`} /><h3 className="text-xl font-serif uppercase">Ink</h3></div>
                 </div>
               )}
 
@@ -262,7 +266,7 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     {loading ? <div className="col-span-2 flex justify-center py-24"><Loader2 className="animate-spin" size={36} /></div> :
-                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-100" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#F3E5AB]'} to-transparent text-[9px] font-bold uppercase text-center font-serif leading-tight line-clamp-2`}>{item.title.english || item.title.romaji}</div></div>))
+                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-100" alt="card" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center font-serif leading-tight line-clamp-2`}>{item.title.english || item.title.romaji}</div></div>))
                     }
                   </div>
                 </div>
@@ -273,7 +277,7 @@ export default function App() {
                   <button onClick={() => setChamberType(null)} className={`flex items-center gap-2 text-[10px] uppercase mb-8 font-serif opacity-60`}><ChevronLeft size={16} /> Close Archives</button>
                   <div className="grid grid-cols-2 gap-4">
                     {loading ? <div className="col-span-2 flex justify-center py-20 animate-pulse"><Loader2 /></div> : 
-                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border-2 relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#F3E5AB]'} to-transparent text-[9px] font-bold uppercase text-center`}>{item.title.english || item.title.romaji}</div></div>))
+                      data.map(item => (<div key={item.id} className={`aspect-[2/3] rounded-t-full overflow-hidden border-2 relative group ${theme.glass}`}><img src={item.coverImage.extraLarge} className="w-full h-full object-cover opacity-60" /><div className={`absolute inset-0 p-4 flex flex-col justify-end bg-gradient-to-t ${isNight ? 'from-black' : 'from-[#DCD4B8]'} to-transparent text-[9px] font-bold uppercase text-center`}>{item.title.english || item.title.romaji}</div></div>))
                     }
                   </div>
                 </div>
@@ -314,5 +318,4 @@ export default function App() {
     </div>
   );
 }
-
 
