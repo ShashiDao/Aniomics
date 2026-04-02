@@ -7,9 +7,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['Cinzel', 'serif'],
+        serif: ['Georgia', 'serif'],
         sans: ['Inter', 'sans-serif'],
       },
+      animation: {
+        'spin-slow': 'spin 8s linear infinite',
+      }
     },
   },
   plugins: [],
