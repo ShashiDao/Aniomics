@@ -53,65 +53,60 @@ export default function App() {
     if (!urlInput) return;
 
     setIsSanctifying(true);
-    const gProxy = "https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=";
-    const htmlProxy = "https://api.allorigins.win/get?url="; 
+    // Google Proxy to bypass Hotlink/CORS for images
+    const imgProxy = "https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=";
+    // Reliable CORS Bridge for HTML/API
+    const corsBridge = "https://corsproxy.io/?"; 
 
     try {
       const url = new URL(urlInput);
       let foundImages = [];
 
-      // --- EXTENSION: MANGADEX ---
+      // --- BRANCH A: MANGADEX (API Based) ---
       if (url.hostname.includes('mangadex.org')) {
-        const pathParts = url.pathname.split('/');
-        const chapterIdx = pathParts.indexOf('chapter');
-        const chapterId = pathParts[chapterIdx + 1];
-
-        if (!chapterId) throw new Error("Invalid MangaDex Link");
-
-        // DIRECT FETCH: MangaDex API allows direct browser requests (CORS enabled)
-        const apiRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
-        if (!apiRes.ok) throw new Error("MangaDex API failed");
+        const parts = url.pathname.split('/');
+        const chapterId = parts[parts.indexOf('chapter') + 1];
         
-        const apiData = await apiRes.json();
+        if (!chapterId) throw new Error("Invalid Link");
+
+        // We fetch the server info via the CORS bridge
+        const res = await fetch(`${corsBridge}${encodeURIComponent(`https://api.mangadex.org/at-home/server/${chapterId}`)}`);
+        const data = await res.json();
         
-        if (apiData.chapter) {
-          const { baseUrl, hash, data } = apiData.chapter;
-          foundImages = data.map(img => `${gProxy}${encodeURIComponent(`${baseUrl}/data/${hash}/${img}`)}`);
+        if (data.chapter) {
+          const { baseUrl, hash, data: pages } = data.chapter;
+          foundImages = pages.map(p => `${imgProxy}${encodeURIComponent(`${baseUrl}/data/${hash}/${p}`)}`);
         }
       } 
-      // --- EXTENSION: GENERIC BROWSER-SIDE SCRAPER ---
+      // --- BRANCH B: GENERIC (Scraper Based) ---
       else {
-        const res = await fetch(`${htmlProxy}${encodeURIComponent(urlInput)}`);
-        if (!res.ok) throw new Error("Proxy Timeout");
+        const res = await fetch(`${corsBridge}${encodeURIComponent(urlInput)}`);
+        const html = await res.text();
         
-        const json = await res.json();
-        const html = json.contents;
-
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        const imgs = doc.querySelectorAll('img');
+        const imgs = Array.from(doc.querySelectorAll('img'));
         
         imgs.forEach(img => {
           const src = img.getAttribute('data-src') || img.getAttribute('data-lazy-src') || img.getAttribute('src');
-          if (src && !/logo|icon|avatar|banner|ads|button|wp-custom/i.test(src)) {
+          if (src && !/logo|icon|avatar|banner|ads/i.test(src)) {
             let fullSrc = src.trim();
             if (fullSrc.startsWith('//')) fullSrc = 'https:' + fullSrc;
             else if (fullSrc.startsWith('/')) fullSrc = url.origin + fullSrc;
             else if (!fullSrc.startsWith('http')) fullSrc = url.origin + '/' + fullSrc;
             
-            foundImages.push(`${gProxy}${encodeURIComponent(fullSrc)}`);
+            foundImages.push(`${imgProxy}${encodeURIComponent(fullSrc)}`);
           }
         });
       }
 
-      if (foundImages.length > 0) {
+      if (foundImages.length > 2) {
         setReaderData({ images: [...new Set(foundImages)] });
       } else {
-        alert("The void is too strong. No pages found. Ensure you are using a direct chapter link.");
+        alert("The void is too strong. No pages found. Ensure this is a direct chapter link.");
       }
     } catch (err) {
-      console.error(err);
-      alert("Sanctification failed. The site blocked the request or the link is invalid.");
+      alert("Sanctification failed. The site might be blocked by Cloudflare or the link is incorrect.");
     } finally {
       setIsSanctifying(false);
       setUrlInput("");
@@ -135,9 +130,9 @@ export default function App() {
           </button>
           <span className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">{readerData.images.length} Pages</span>
         </nav>
-        <main className="pt-14 flex flex-col items-center bg-black min-h-screen">
+        <main className="pt-14 flex flex-col items-center bg-black min-h-screen overflow-y-auto">
           {readerData.images.map((img, i) => (
-            <div key={i} className="w-full max-w-3xl min-h-[300px] flex items-center justify-center relative bg-[#050505]">
+            <div key={i} className="w-full max-w-3xl min-h-[300px] flex items-center justify-center relative bg-black">
               <img 
                 src={img} 
                 alt={`Page ${i+1}`} 
@@ -145,7 +140,7 @@ export default function App() {
                 loading="lazy"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 flex items-center justify-center opacity-10">
+              <div className="absolute inset-0 flex items-center justify-center opacity-5">
                 <Loader2 className="animate-spin text-[#E6C35C]" size={24} />
               </div>
             </div>
@@ -229,9 +224,6 @@ export default function App() {
       </nav>
 
       <header className="pt-32 pb-12 px-6 flex flex-col items-center text-center z-10">
-        <div className="flex items-center gap-2 mb-4 text-[#E6C35C] animate-pulse">
-          <Sparkles size={12} /><span className="text-[9px] uppercase tracking-[0.4em] font-bold">Universal Aesthetic Shell</span>
-        </div>
         <h1 className="text-4xl md:text-6xl font-serif uppercase tracking-tight leading-[1.1] mb-6">
           The Sanctuary <br /><span className="text-[#E6C35C]">For Every Story</span>
         </h1>
@@ -262,12 +254,7 @@ export default function App() {
           <ArrowRight className="text-white/40" size={12} />
         </button>
       </div>
-
-      <footer className="mt-auto py-12 border-t border-white/5 flex flex-col items-center opacity-40">
-        <p className="text-[8px] uppercase tracking-[0.5em] font-black text-[#E6C35C]">support@aniomics.art</p>
-      </footer>
     </div>
   );
 }
-
 
