@@ -58,12 +58,15 @@ export default function App() {
       {/* --- NAVIGATION --- */}
       <nav className="fixed top-0 left-0 right-0 h-16 px-6 flex items-center justify-between z-[100] backdrop-blur-xl border-b border-current/5">
         <div className="flex items-center gap-3">
-          <img 
-            src={logo} 
-            alt="Logo" 
-            className="h-9 w-auto object-contain brightness-110" 
-            onError={(e) => { e.target.style.opacity = '0'; }} 
-          />
+          {/* CIRCULAR LOGO FRAME */}
+          <div className="h-10 w-10 rounded-full border border-[#E6C35C]/30 overflow-hidden bg-black/20 flex items-center justify-center p-0.5 shadow-lg">
+            <img 
+              src={logo} 
+              alt="Logo" 
+              className="h-full w-full object-cover rounded-full brightness-110" 
+              onError={(e) => { e.target.style.opacity = '0'; }} 
+            />
+          </div>
           <span className="text-sm font-serif tracking-[0.2em] uppercase font-bold text-[#E6C35C]">
             Aniomics
           </span>
@@ -93,7 +96,7 @@ export default function App() {
               placeholder="Paste scroll link..." 
               className="bg-transparent flex-1 outline-none text-[13px] px-4 font-sans placeholder:opacity-30"
             />
-            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center shadow-lg">
+            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
               {isSanctifying ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
             </button>
           </div>
@@ -124,13 +127,13 @@ export default function App() {
          </div>
          <div className="space-y-3">
             {FAQS.map((f, i) => (
-              <div key={i} className={`rounded-2xl border ${theme.glass} overflow-hidden`}>
+              <div key={i} className={`rounded-2xl border ${theme.glass} overflow-hidden transition-all duration-300`}>
                 <button 
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full p-5 flex justify-between items-center text-left"
                 >
                   <span className="text-[11px] font-bold uppercase tracking-tight">{f.q}</span>
-                  <ChevronDown size={14} className={`transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 {openFaq === i && (
                   <div className="px-5 pb-5 text-[10px] opacity-60 leading-relaxed">
@@ -145,20 +148,23 @@ export default function App() {
       {/* --- FOOTER --- */}
       <footer className="mt-auto pt-16 pb-32 border-t border-current/5 flex flex-col items-center z-10 bg-black/40 backdrop-blur-md">
         <div className="flex gap-8 mb-10 opacity-60">
-          <a href="https://discord.gg/5FHVw9wDfh" target="_blank" className="hover:text-[#E6C35C]"><MessageCircle size={22} /></a>
-          <a href="https://t.me/AniOmics" target="_blank" className="hover:text-[#E6C35C]"><TelegramIcon size={22} /></a>
-          <a href="mailto:support@aniomics.art" className="hover:text-[#E6C35C]"><Mail size={22} /></a>
+          <a href="https://discord.gg/5FHVw9wDfh" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><MessageCircle size={22} /></a>
+          <a href="https://t.me/AniOmics" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><TelegramIcon size={22} /></a>
+          <a href="mailto:support@aniomics.art" className="hover:text-[#E6C35C] transition-colors"><Mail size={22} /></a>
         </div>
         <p className="text-[9px] uppercase tracking-[0.3em] font-black text-[#E6C35C] mb-8">support@aniomics.art</p>
-        <img src={logo} alt="" className="h-6 w-auto opacity-20 grayscale mb-4" />
+        {/* CIRCULAR FOOTER BRAND */}
+        <div className="h-12 w-12 rounded-full border border-[#E6C35C]/10 overflow-hidden opacity-20 grayscale mb-4">
+           <img src={logo} alt="" className="h-full w-full object-cover" />
+        </div>
       </footer>
 
       {/* --- GET APP BUTTON --- */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[160px] px-2">
-        <button className="w-full h-10 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl">
+        <button className="w-full h-10 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all">
           <div className="flex items-center gap-2">
-             <div className="h-7 w-7 bg-[#E6C35C] rounded-lg flex items-center justify-center overflow-hidden">
-               <img src={logo} alt="" className="h-4 w-auto brightness-0" />
+             <div className="h-7 w-7 bg-[#E6C35C] rounded-full flex items-center justify-center overflow-hidden border border-black/10">
+               <img src={logo} alt="" className="h-full w-full object-cover brightness-0" />
              </div>
              <span className="text-white text-[10px] font-bold tracking-wider">Get App</span>
           </div>
@@ -166,11 +172,11 @@ export default function App() {
         </button>
       </div>
 
-      {/* --- TOP --- */}
+      {/* --- TOP BUTTON --- */}
       {showTop && (
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-          className="fixed bottom-8 right-4 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151]"
+          className="fixed bottom-8 right-4 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151] active:scale-90 transition-transform"
         >
           <span className="text-[8px] font-black">TOP</span>
         </button>
