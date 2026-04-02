@@ -54,8 +54,7 @@ export default function App() {
 
     setIsSanctifying(true);
     const gProxy = "https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=";
-    const rawProxy = "https://api.allorigins.win/raw?url="; // Used to bypass CORS for JSON APIs
-    const htmlProxy = "https://api.allorigins.win/get?url="; // Used for raw HTML
+    const htmlProxy = "https://api.allorigins.win/get?url="; 
 
     try {
       const url = new URL(urlInput);
@@ -69,8 +68,10 @@ export default function App() {
 
         if (!chapterId) throw new Error("Invalid MangaDex Link");
 
-        // Fetch using the RAW proxy to bypass browser blocks
-        const apiRes = await fetch(`${rawProxy}${encodeURIComponent(`https://api.mangadex.org/at-home/server/${chapterId}`)}`);
+        // DIRECT FETCH: MangaDex API allows direct browser requests (CORS enabled)
+        const apiRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
+        if (!apiRes.ok) throw new Error("MangaDex API failed");
+        
         const apiData = await apiRes.json();
         
         if (apiData.chapter) {
@@ -81,6 +82,8 @@ export default function App() {
       // --- EXTENSION: GENERIC BROWSER-SIDE SCRAPER ---
       else {
         const res = await fetch(`${htmlProxy}${encodeURIComponent(urlInput)}`);
+        if (!res.ok) throw new Error("Proxy Timeout");
+        
         const json = await res.json();
         const html = json.contents;
 
@@ -107,6 +110,7 @@ export default function App() {
         alert("The void is too strong. No pages found. Ensure you are using a direct chapter link.");
       }
     } catch (err) {
+      console.error(err);
       alert("Sanctification failed. The site blocked the request or the link is invalid.");
     } finally {
       setIsSanctifying(false);
