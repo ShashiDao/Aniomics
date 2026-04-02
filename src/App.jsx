@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import logo from './Assets/logo.png'; 
 import { 
-  Library, Sparkles, Smartphone, 
-  Moon, Sun, Wand2, Globe, Loader2,
-  Users, Zap, ShieldCheck,
-  MessageCircle, Send as TelegramIcon, Mail,
-  ChevronDown, HelpCircle, ArrowRight
+  Sparkles, Moon, Sun, Wand2, Loader2,
+  Users, Zap, MessageCircle, Send as TelegramIcon, 
+  Mail, ChevronDown, HelpCircle, ArrowRight
 } from 'lucide-react';
 
 const Atmosphere = ({ phase }) => {
@@ -58,18 +57,25 @@ export default function App() {
 
       {/* --- NAVIGATION --- */}
       <nav className="fixed top-0 left-0 right-0 h-16 px-6 flex items-center justify-between z-[100] backdrop-blur-xl border-b border-current/5">
-        <div className="flex items-center gap-2">
-          <Library size={22} className="text-[#E6C35C]" />
-          <span className="text-sm font-serif tracking-[0.2em] uppercase font-bold">Aniomics</span>
+        <div className="flex items-center gap-3">
+          <img 
+            src={logo} 
+            alt="Logo" 
+            className="h-9 w-auto object-contain brightness-110" 
+            onError={(e) => { e.target.style.opacity = '0'; }} 
+          />
+          <span className="text-sm font-serif tracking-[0.2em] uppercase font-bold text-[#E6C35C]">
+            Aniomics
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setPhase(isNight ? 'day' : 'night')} className="p-2 opacity-60">
-             {isNight ? <Moon size={16} /> : <Sun size={16} />}
+             {isNight ? <Moon size={18} /> : <Sun size={18} />}
           </button>
         </div>
       </nav>
 
-      {/* --- HERO SECTION --- */}
+      {/* --- HERO --- */}
       <header className="pt-32 pb-12 px-6 flex flex-col items-center text-center z-10">
         <div className="flex items-center justify-center gap-2 mb-4 text-[#E6C35C] animate-pulse">
           <Sparkles size={12} />
@@ -87,14 +93,14 @@ export default function App() {
               placeholder="Paste scroll link..." 
               className="bg-transparent flex-1 outline-none text-[13px] px-4 font-sans placeholder:opacity-30"
             />
-            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center active:scale-90 shadow-lg transition-transform">
+            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center shadow-lg">
               {isSanctifying ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
             </button>
           </div>
         </form>
       </header>
 
-      {/* --- STATS SECTION --- */}
+      {/* --- STATS --- */}
       <section className="px-8 py-4 z-10 max-w-md mx-auto w-full mb-12">
          <div className="flex justify-center gap-12 opacity-60">
             <div className="flex flex-col items-center text-center">
@@ -110,7 +116,7 @@ export default function App() {
          </div>
       </section>
 
-      {/* --- FAQ SECTION --- */}
+      {/* --- FAQ --- */}
       <section className="px-6 py-12 z-10 max-w-md mx-auto w-full mb-24">
          <div className="flex items-center gap-2 text-[#E6C35C] mb-8 justify-center">
             <HelpCircle size={14} />
@@ -118,16 +124,16 @@ export default function App() {
          </div>
          <div className="space-y-3">
             {FAQS.map((f, i) => (
-              <div key={i} className={`rounded-2xl border ${theme.glass} overflow-hidden transition-all duration-500`}>
+              <div key={i} className={`rounded-2xl border ${theme.glass} overflow-hidden`}>
                 <button 
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full p-5 flex justify-between items-center text-left"
                 >
-                  <span className="text-[11px] font-bold uppercase tracking-tight leading-tight pr-4">{f.q}</span>
-                  <ChevronDown size={14} className={`transition-transform duration-300 opacity-40 ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <span className="text-[11px] font-bold uppercase tracking-tight">{f.q}</span>
+                  <ChevronDown size={14} className={`transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 {openFaq === i && (
-                  <div className="px-5 pb-5 text-[10px] opacity-60 leading-relaxed animate-in fade-in slide-in-from-top-2">
+                  <div className="px-5 pb-5 text-[10px] opacity-60 leading-relaxed">
                     <div className="pt-4 border-t border-white/5">{f.a}</div>
                   </div>
                 )}
@@ -139,46 +145,34 @@ export default function App() {
       {/* --- FOOTER --- */}
       <footer className="mt-auto pt-16 pb-32 border-t border-current/5 flex flex-col items-center z-10 bg-black/40 backdrop-blur-md">
         <div className="flex gap-8 mb-10 opacity-60">
-          <a href="https://discord.gg/5FHVw9wDfh" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><MessageCircle size={22} /></a>
-          <a href="https://t.me/AniOmics" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><TelegramIcon size={22} /></a>
-          <a href="mailto:support@aniomics.art" className="hover:text-[#E6C35C] transition-colors"><Mail size={22} /></a>
+          <a href="https://discord.gg/5FHVw9wDfh" target="_blank" className="hover:text-[#E6C35C]"><MessageCircle size={22} /></a>
+          <a href="https://t.me/AniOmics" target="_blank" className="hover:text-[#E6C35C]"><TelegramIcon size={22} /></a>
+          <a href="mailto:support@aniomics.art" className="hover:text-[#E6C35C]"><Mail size={22} /></a>
         </div>
-        
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-3 px-6 mb-8 max-w-xs text-center">
-          {['ABOUT', 'FEEDBACK', 'HELP', 'TERMS', 'PRIVACY', 'DMCA', 'CONTACT'].map((link, i) => (
-            <React.Fragment key={link}>
-              <button className="text-[10px] font-bold tracking-[0.1em] opacity-40 hover:opacity-100 transition-opacity">{link}</button>
-              {i < 6 && <span className="text-[10px] opacity-10">|</span>}
-            </React.Fragment>
-          ))}
-        </div>
-        <p className="text-[9px] uppercase tracking-[0.3em] font-black text-[#E6C35C] mb-12">support@aniomics.art</p>
-        <div className="flex items-center gap-2 opacity-10 scale-75">
-          <Library size={18} />
-          <span className="text-[11px] uppercase tracking-[0.4em] font-bold">Aniomics Sanctuary © 2026</span>
-        </div>
+        <p className="text-[9px] uppercase tracking-[0.3em] font-black text-[#E6C35C] mb-8">support@aniomics.art</p>
+        <img src={logo} alt="" className="h-6 w-auto opacity-20 grayscale mb-4" />
       </footer>
 
-      {/* --- MINI APP BUTTON (40% SMALLER) --- */}
+      {/* --- GET APP BUTTON --- */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[160px] px-2">
-        <button className="w-full h-10 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all group overflow-hidden">
+        <button className="w-full h-10 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl">
           <div className="flex items-center gap-2">
-             <div className="h-7 w-7 bg-[#E6C35C] rounded-lg flex items-center justify-center text-black shadow-inner">
-               <Library size={14} />
+             <div className="h-7 w-7 bg-[#E6C35C] rounded-lg flex items-center justify-center overflow-hidden">
+               <img src={logo} alt="" className="h-4 w-auto brightness-0" />
              </div>
              <span className="text-white text-[10px] font-bold tracking-wider">Get App</span>
           </div>
-          <ArrowRight className="text-white/40 group-hover:text-white transition-colors" size={12} />
+          <ArrowRight className="text-white/40" size={12} />
         </button>
       </div>
 
-      {/* --- TOP BUTTON --- */}
+      {/* --- TOP --- */}
       {showTop && (
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-          className="fixed bottom-8 right-4 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151] active:scale-90 transition-transform animate-in fade-in zoom-in"
+          className="fixed bottom-8 right-4 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151]"
         >
-          <span className="text-[8px] font-black tracking-tighter">TOP</span>
+          <span className="text-[8px] font-black">TOP</span>
         </button>
       )}
     </div>
