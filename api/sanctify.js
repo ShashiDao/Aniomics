@@ -1,28 +1,38 @@
 export default async function handler(req, res) {
   const { url } = req.query;
-  if (!url) return res.status(400).json({ error: 'Missing URL' });
+  if (!url) return res.status(400).json({ error: 'No URL provided' });
 
   try {
-    const targetUrl = new URL(url);
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Referer': targetUrl.origin,
-        'Cache-Control': 'no-cache'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
       }
     });
 
+    if (!response.ok) throw new Error('Site blocked access');
+
     const html = await response.text();
+    const targetOrigin = new URL(url).origin;
 
-    // This regex is specifically tuned for Madara/Kunmanga lazy-loading
-    const imgRegex = /wp-content\/uploads\/[^"']+\.(?:jpg|jpeg|png|webp)/gi;
-    const matches = html.match(imgRegex) || [];
+    // A more aggressive regex to catch all images inside Kunmanga's reader
+    const imgRegex = /<img[^>]+(?:src|data-src|data-lazy-src)=["']([^"']+\.(?:jpg|jpeg|png|webp))["']/gi;
     
-    // Convert relative matches to absolute URLs
-    const images = [...new Set(matches)].map(img => {
-      if (img.startsWith('http')) return img;
-      return `${targetUrl.origin}/${img.startsWith('/') ? img.slice(1) : img}`;
-    });
+    let images = [];
+    let match;
+    while ((match = imgRegex.exec(html)) !== null) {
+      let src = match[1];
+      if (src.startsWith('//')) src = 'https:' + src;
+      else if (src.startsWith('/')) src = targetOrigin + src;
+      images.push(src);
+    }
 
-    // Remove duplicates and common UI garbage
+    // Filter out UI elements
+    const cleanImages = [...new Set(images)].filter(img => !/logo|avatar|icon|banner|ads/i.test(img));
+
+    res.status(200).json({ success: true, images: cleanImages });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
