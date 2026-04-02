@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   try {
     const targetUrl = new URL(url);
     
-    // --- MANGADEX HANDLER ---
+    // MangaDex Official API
     if (targetUrl.hostname.includes('mangadex.org')) {
       const chapterId = url.split('/').filter(Boolean).pop();
       const serverRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
@@ -13,7 +13,6 @@ export default async function handler(req, res) {
       
       if (serverData.chapter) {
         const { baseUrl, hash, data } = serverData.chapter;
-        // Use weserv.nl to proxy the images. It handles CORS and Referer automatically.
         const images = data.map(img => {
           const original = `${baseUrl}/data/${hash}/${img}`;
           return `https://images.weserv.nl/?url=${encodeURIComponent(original)}&default=${encodeURIComponent(original)}`;
@@ -22,7 +21,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // --- UNIVERSAL FALLBACK ---
+    // Universal Fallback
     const response = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
     });
@@ -34,8 +33,6 @@ export default async function handler(req, res) {
       let src = match[1].trim();
       if (src.startsWith('//')) src = 'https:' + src;
       else if (src.startsWith('/')) src = targetUrl.origin + src;
-      
-      // Use weserv.nl for the fallback images too
       images.push(`https://images.weserv.nl/?url=${encodeURIComponent(src)}&default=${encodeURIComponent(src)}`);
     }
 
