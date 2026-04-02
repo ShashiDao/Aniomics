@@ -1,44 +1,43 @@
 export default async function handler(req, res) {
   const { url, proxy } = req.query;
 
-  // --- IMAGE PROXY HANDLER ---
+  // --- 1. THE IMAGE PROXY (BINARY HANDLER) ---
   if (proxy) {
     try {
       const decodedUrl = decodeURIComponent(proxy);
       const imgRes = await fetch(decodedUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Referer': new URL(decodedUrl).origin, // Crucial: sets the referer to the image's own site
-          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+          'Referer': 'https://mangadex.org/',
+          'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'
         }
       });
 
-      if (!imgRes.ok) throw new Error('Failed to fetch image');
+      if (!imgRes.ok) throw new Error('Image fetch blocked');
 
-      // Get binary data
+      const contentType = imgRes.headers.get('Content-Type') || 'image/jpeg';
       const arrayBuffer = await imgRes.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      // Set headers for the browser
-      res.setHeader('Content-Type', imgRes.headers.get('Content-Type') || 'image/jpeg');
-      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
-      res.setHeader('Access-Control-Allow-Origin', '*');
       
-      // Send raw buffer
-      return res.status(200).send(buffer);
+      // Essential Headers for binary delivery
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Length', arrayBuffer.byteLength);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+
+      // Convert to Buffer and end the stream explicitly
+      return res.status(200).end(Buffer.from(arrayBuffer));
     } catch (e) {
-      console.error('Proxy error:', e);
-      return res.status(500).send('Image Fetch Error');
+      return res.status(500).end();
     }
   }
 
-  // --- URL SANCTIFIER LOGIC ---
-  if (!url) return res.status(400).json({ error: 'No URL provided' });
+  // --- 2. THE URL SANCTIFIER (HTML PARSER) ---
+  if (!url) return res.status(400).json({ error: 'Missing URL' });
 
   try {
     const targetUrl = new URL(url);
 
-    // MANGADEX HANDLER
+    // MANGADEX CASE
     if (targetUrl.hostname.includes('mangadex.org')) {
       const chapterId = url.split('/').filter(Boolean).pop();
       const serverRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
@@ -70,9 +69,9 @@ export default async function handler(req, res) {
     }
 
     const finalImages = [...new Set(images)].filter(img => !/logo|avatar|icon|banner|ads/i.test(img));
-    res.status(200).json({ success: true, images: finalImages });
+    return res.status(200).json({ success: true, images: finalImages });
 
   } catch (error) {
-    res.status(500).json({ success: false });
+    return res.status(500).json({ success: false });
   }
 }
