@@ -66,7 +66,6 @@ export default function App() {
           <button onClick={() => setPhase(isNight ? 'day' : 'night')} className="p-2 opacity-60">
              {isNight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
-          <button className="px-4 py-1.5 bg-[#E6C35C] text-black text-[9px] uppercase font-black tracking-widest rounded-full shadow-lg active:scale-95 transition-all">Get App</button>
         </div>
       </nav>
 
@@ -112,7 +111,7 @@ export default function App() {
       </section>
 
       {/* --- FAQ SECTION --- */}
-      <section className="px-6 py-12 z-10 max-w-md mx-auto w-full mb-20">
+      <section className="px-6 py-12 z-10 max-w-md mx-auto w-full mb-24">
          <div className="flex items-center gap-2 text-[#E6C35C] mb-8 justify-center">
             <HelpCircle size={14} />
             <span className="text-[9px] uppercase font-black tracking-[0.3em]">Scrolls of Inquiry</span>
@@ -137,16 +136,14 @@ export default function App() {
          </div>
       </section>
 
-      {/* --- FOOTER (WEBTOON STYLE) --- */}
-      <footer className="mt-auto pt-16 pb-28 border-t border-current/5 flex flex-col items-center z-10 bg-black/40 backdrop-blur-md">
-        {/* Social Icons */}
+      {/* --- FOOTER --- */}
+      <footer className="mt-auto pt-16 pb-32 border-t border-current/5 flex flex-col items-center z-10 bg-black/40 backdrop-blur-md">
         <div className="flex gap-8 mb-10 opacity-60">
           <a href="https://discord.gg/5FHVw9wDfh" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><MessageCircle size={22} /></a>
           <a href="https://t.me/AniOmics" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><TelegramIcon size={22} /></a>
           <a href="mailto:support@aniomics.art" className="hover:text-[#E6C35C] transition-colors"><Mail size={22} /></a>
         </div>
         
-        {/* Links Grid */}
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-3 px-6 mb-8 max-w-xs text-center">
           {['ABOUT', 'FEEDBACK', 'HELP', 'TERMS', 'PRIVACY', 'DMCA', 'CONTACT'].map((link, i) => (
             <React.Fragment key={link}>
@@ -155,25 +152,23 @@ export default function App() {
             </React.Fragment>
           ))}
         </div>
-        
         <p className="text-[9px] uppercase tracking-[0.3em] font-black text-[#E6C35C] mb-12">support@aniomics.art</p>
-        
         <div className="flex items-center gap-2 opacity-10 scale-75">
           <Library size={18} />
           <span className="text-[11px] uppercase tracking-[0.4em] font-bold">Aniomics Sanctuary © 2026</span>
         </div>
       </footer>
 
-      {/* --- FLOATING APP BUTTON (WEBTOON STYLE) --- */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[280px] px-4">
-        <button className="w-full h-14 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-2 pr-6 shadow-2xl active:scale-95 transition-all group overflow-hidden">
-          <div className="flex items-center gap-3">
-             <div className="h-10 w-10 bg-[#E6C35C] rounded-2xl flex items-center justify-center text-black shadow-inner">
-               <Library size={20} />
+      {/* --- MINI APP BUTTON (40% SMALLER) --- */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[160px] px-2">
+        <button className="w-full h-10 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all group overflow-hidden">
+          <div className="flex items-center gap-2">
+             <div className="h-7 w-7 bg-[#E6C35C] rounded-lg flex items-center justify-center text-black shadow-inner">
+               <Library size={14} />
              </div>
-             <span className="text-white text-xs font-bold tracking-wider">Get the app</span>
+             <span className="text-white text-[10px] font-bold tracking-wider">Get App</span>
           </div>
-          <ArrowRight className="text-white/40 group-hover:text-white transition-colors" size={16} />
+          <ArrowRight className="text-white/40 group-hover:text-white transition-colors" size={12} />
         </button>
       </div>
 
@@ -181,12 +176,13 @@ export default function App() {
       {showTop && (
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-          className="fixed bottom-8 right-6 w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151] active:scale-90 transition-transform animate-in fade-in zoom-in"
+          className="fixed bottom-8 right-4 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151] active:scale-90 transition-transform animate-in fade-in zoom-in"
         >
-          <span className="text-[9px] font-black tracking-tighter">TOP</span>
+          <span className="text-[8px] font-black tracking-tighter">TOP</span>
         </button>
       )}
     </div>
   );
 }
+
 
