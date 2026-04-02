@@ -53,50 +53,60 @@ export default function App() {
     if (!urlInput) return;
 
     setIsSanctifying(true);
+    const gProxy = "https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=";
+
     try {
-      // TACHIYOMI-STYLE: SCRAPE LOCALLY IN BROWSER
-      const proxyUrl = "https://api.allorigins.win/get?url=";
-      const res = await fetch(`${proxyUrl}${encodeURIComponent(urlInput)}`);
-      
-      if (!res.ok) throw new Error("Gate barred.");
-      
-      const json = await res.json();
-      const html = json.contents;
-
-      // PARSE DOM
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const imageElements = doc.querySelectorAll('img');
+      const url = new URL(urlInput);
       let foundImages = [];
-      const origin = new URL(urlInput).origin;
-      const gProxy = "https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=";
 
-      imageElements.forEach(img => {
-        // Check multiple attributes for lazy-loaded images
-        const src = img.getAttribute('data-src') || 
-                    img.getAttribute('data-lazy-src') || 
-                    img.getAttribute('data-original') || 
-                    img.getAttribute('src');
+      // --- EXTENSION: MANGADEX ---
+      if (url.hostname.includes('mangadex.org')) {
+        // Correctly extract Chapter UUID regardless of URL structure
+        const pathParts = url.pathname.split('/');
+        const chapterIdx = pathParts.indexOf('chapter');
+        const chapterId = pathParts[chapterIdx + 1];
 
-        if (src && !/logo|avatar|icon|banner|ads|button|wp-custom/i.test(src)) {
-          let cleanSrc = src.trim();
-          if (cleanSrc.startsWith('//')) cleanSrc = 'https:' + cleanSrc;
-          else if (cleanSrc.startsWith('/')) cleanSrc = origin + cleanSrc;
-          else if (!cleanSrc.startsWith('http')) cleanSrc = origin + '/' + cleanSrc;
-          
-          foundImages.push(`${gProxy}${encodeURIComponent(cleanSrc)}`);
+        if (!chapterId) throw new Error("Invalid MangaDex Link");
+
+        const apiRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
+        const apiData = await apiRes.json();
+        
+        if (apiData.chapter) {
+          const { baseUrl, hash, data } = apiData.chapter;
+          foundImages = data.map(img => `${gProxy}${encodeURIComponent(`${baseUrl}/data/${hash}/${img}`)}`);
         }
-      });
+      } 
+      // --- EXTENSION: GENERIC BROWSER-SIDE SCRAPER ---
+      else {
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const res = await fetch(`${proxyUrl}${encodeURIComponent(urlInput)}`);
+        const json = await res.json();
+        const html = json.contents;
 
-      const finalImages = [...new Set(foundImages)];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const imgs = doc.querySelectorAll('img');
+        
+        imgs.forEach(img => {
+          const src = img.getAttribute('data-src') || img.getAttribute('data-lazy-src') || img.getAttribute('src');
+          if (src && !/logo|icon|avatar|banner|ads|button|wp-custom/i.test(src)) {
+            let fullSrc = src.trim();
+            if (fullSrc.startsWith('//')) fullSrc = 'https:' + fullSrc;
+            else if (fullSrc.startsWith('/')) fullSrc = url.origin + fullSrc;
+            else if (!fullSrc.startsWith('http')) fullSrc = url.origin + '/' + fullSrc;
+            
+            foundImages.push(`${gProxy}${encodeURIComponent(fullSrc)}`);
+          }
+        });
+      }
 
-      if (finalImages.length > 3) {
-        setReaderData({ images: finalImages });
+      if (foundImages.length > 2) {
+        setReaderData({ images: [...new Set(foundImages)] });
       } else {
-        alert("The void is too strong. No pages found at this link.");
+        alert("The void is too strong. No pages found. Ensure you are using a direct chapter link.");
       }
     } catch (err) {
-      alert("Sanctification failed. The site might be blocking browser-based requests.");
+      alert("Sanctification failed. The site might be blocked or the link is invalid.");
     } finally {
       setIsSanctifying(false);
       setUrlInput("");
@@ -112,7 +122,7 @@ export default function App() {
 
   if (readerData) {
     return (
-      <div className={`min-h-screen bg-black flex flex-col z-[300]`}>
+      <div className="min-h-screen bg-black flex flex-col z-[300]">
         <nav className="fixed top-0 w-full h-14 bg-black/95 backdrop-blur-md flex items-center px-4 justify-between border-b border-white/10 z-[301]">
           <button onClick={() => setReaderData(null)} className="text-[#E6C35C] flex items-center gap-2">
             <ChevronLeft size={20} />
@@ -122,7 +132,7 @@ export default function App() {
         </nav>
         <main className="pt-14 flex flex-col items-center bg-black min-h-screen">
           {readerData.images.map((img, i) => (
-            <div key={i} className="w-full max-w-3xl flex items-center justify-center relative bg-[#050505] min-h-[300px]">
+            <div key={i} className="w-full max-w-3xl min-h-[300px] flex items-center justify-center relative bg-[#050505]">
               <img 
                 src={img} 
                 alt={`Page ${i+1}`} 
@@ -140,6 +150,7 @@ export default function App() {
     );
   }
 
+  // APP DASHBOARD VIEW
   if (isApp) {
     return (
       <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col font-sans transition-colors duration-700 relative`}>
@@ -198,6 +209,7 @@ export default function App() {
     );
   }
 
+  // WEB PORTAL VIEW
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col font-sans relative overflow-x-hidden`}>
       <Atmosphere phase={phase} />
@@ -212,6 +224,9 @@ export default function App() {
       </nav>
 
       <header className="pt-32 pb-12 px-6 flex flex-col items-center text-center z-10">
+        <div className="flex items-center gap-2 mb-4 text-[#E6C35C] animate-pulse">
+          <Sparkles size={12} /><span className="text-[9px] uppercase tracking-[0.4em] font-bold">Universal Aesthetic Shell</span>
+        </div>
         <h1 className="text-4xl md:text-6xl font-serif uppercase tracking-tight leading-[1.1] mb-6">
           The Sanctuary <br /><span className="text-[#E6C35C]">For Every Story</span>
         </h1>
@@ -222,26 +237,30 @@ export default function App() {
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="Paste scroll link to enter..." 
-              className="bg-transparent flex-1 outline-none text-[13px] px-4"
+              className="bg-transparent flex-1 outline-none text-[13px] px-4 font-sans placeholder:opacity-30"
             />
-            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center">
+            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
               {isSanctifying ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
             </button>
           </div>
         </form>
       </header>
-      
+
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[160px] px-2">
-        <button onClick={handleInstallClick} className="w-full h-11 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl">
+        <button onClick={handleInstallClick} className="w-full h-11 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all">
           <div className="flex items-center gap-2">
              <div className="h-8 w-8 bg-[#E6C35C] rounded-full flex items-center justify-center p-1.5">
                <img src={logo} className="h-full w-full object-cover brightness-0" alt="" />
              </div>
-             <span className="text-white text-[10px] font-black uppercase">Get App</span>
+             <span className="text-white text-[10px] font-black uppercase tracking-widest">Get App</span>
           </div>
           <ArrowRight className="text-white/40" size={12} />
         </button>
       </div>
+
+      <footer className="mt-auto py-12 border-t border-white/5 flex flex-col items-center opacity-40">
+        <p className="text-[8px] uppercase tracking-[0.5em] font-black text-[#E6C35C]">support@aniomics.art</p>
+      </footer>
     </div>
   );
 }
