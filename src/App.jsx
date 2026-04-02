@@ -29,6 +29,39 @@ export default function App() {
   const [isSanctifying, setIsSanctifying] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [showTop, setShowTop] = useState(false);
+  
+  // --- PWA INSTALL STATE ---
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handleScroll = () => setShowTop(window.scrollY > 400);
+    window.addEventListener('scroll', handleScroll);
+    
+    // Listen for the install prompt
+    const handleInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      // Manual instructions for iOS or browsers where prompt isn't supported yet
+      alert("To Install Aniomics: \n\n1. Tap the Share or Menu button.\n2. Select 'Add to Home Screen'.");
+    }
+  };
 
   const isNight = phase === 'night';
   const theme = {
@@ -37,12 +70,6 @@ export default function App() {
     accent: '#E6C35C',
     glass: isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
   };
-
-  useEffect(() => {
-    const handleScroll = () => setShowTop(window.scrollY > 400);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleSanctify = (e) => {
     e.preventDefault();
@@ -58,7 +85,6 @@ export default function App() {
       {/* --- NAVIGATION --- */}
       <nav className="fixed top-0 left-0 right-0 h-16 px-6 flex items-center justify-between z-[100] backdrop-blur-xl border-b border-current/5">
         <div className="flex items-center gap-3">
-          {/* CIRCULAR LOGO FRAME */}
           <div className="h-10 w-10 rounded-full border border-[#E6C35C]/30 overflow-hidden bg-black/20 flex items-center justify-center p-0.5 shadow-lg">
             <img 
               src={logo} 
@@ -72,7 +98,7 @@ export default function App() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setPhase(isNight ? 'day' : 'night')} className="p-2 opacity-60">
+          <button onClick={() => setPhase(isNight ? 'day' : 'night')} className="p-2 opacity-60 hover:opacity-100 transition-opacity">
              {isNight ? <Moon size={18} /> : <Sun size={18} />}
           </button>
         </div>
@@ -96,7 +122,7 @@ export default function App() {
               placeholder="Paste scroll link..." 
               className="bg-transparent flex-1 outline-none text-[13px] px-4 font-sans placeholder:opacity-30"
             />
-            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+            <button type="submit" className="bg-[#E6C35C] text-black h-10 w-10 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90">
               {isSanctifying ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
             </button>
           </div>
@@ -153,22 +179,24 @@ export default function App() {
           <a href="mailto:support@aniomics.art" className="hover:text-[#E6C35C] transition-colors"><Mail size={22} /></a>
         </div>
         <p className="text-[9px] uppercase tracking-[0.3em] font-black text-[#E6C35C] mb-8">support@aniomics.art</p>
-        {/* CIRCULAR FOOTER BRAND */}
         <div className="h-12 w-12 rounded-full border border-[#E6C35C]/10 overflow-hidden opacity-20 grayscale mb-4">
            <img src={logo} alt="" className="h-full w-full object-cover" />
         </div>
       </footer>
 
-      {/* --- GET APP BUTTON --- */}
+      {/* --- "GET APP" INSTALL BUTTON --- */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[160px] px-2">
-        <button className="w-full h-10 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all">
+        <button 
+          onClick={handleInstallClick}
+          className="w-full h-10 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-1.5 pr-4 shadow-2xl active:scale-95 transition-all group overflow-hidden"
+        >
           <div className="flex items-center gap-2">
              <div className="h-7 w-7 bg-[#E6C35C] rounded-full flex items-center justify-center overflow-hidden border border-black/10">
                <img src={logo} alt="" className="h-full w-full object-cover brightness-0" />
              </div>
-             <span className="text-white text-[10px] font-bold tracking-wider">Get App</span>
+             <span className="text-white text-[10px] font-bold tracking-wider uppercase">Get App</span>
           </div>
-          <ArrowRight className="text-white/40" size={12} />
+          <ArrowRight className="text-white/40 group-hover:text-white transition-colors" size={12} />
         </button>
       </div>
 
