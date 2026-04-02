@@ -54,6 +54,8 @@ export default function App() {
 
     setIsSanctifying(true);
     const gProxy = "https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=";
+    const rawProxy = "https://api.allorigins.win/raw?url="; // Used to bypass CORS for JSON APIs
+    const htmlProxy = "https://api.allorigins.win/get?url="; // Used for raw HTML
 
     try {
       const url = new URL(urlInput);
@@ -61,14 +63,14 @@ export default function App() {
 
       // --- EXTENSION: MANGADEX ---
       if (url.hostname.includes('mangadex.org')) {
-        // Correctly extract Chapter UUID regardless of URL structure
         const pathParts = url.pathname.split('/');
         const chapterIdx = pathParts.indexOf('chapter');
         const chapterId = pathParts[chapterIdx + 1];
 
         if (!chapterId) throw new Error("Invalid MangaDex Link");
 
-        const apiRes = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
+        // Fetch using the RAW proxy to bypass browser blocks
+        const apiRes = await fetch(`${rawProxy}${encodeURIComponent(`https://api.mangadex.org/at-home/server/${chapterId}`)}`);
         const apiData = await apiRes.json();
         
         if (apiData.chapter) {
@@ -78,8 +80,7 @@ export default function App() {
       } 
       // --- EXTENSION: GENERIC BROWSER-SIDE SCRAPER ---
       else {
-        const proxyUrl = "https://api.allorigins.win/get?url=";
-        const res = await fetch(`${proxyUrl}${encodeURIComponent(urlInput)}`);
+        const res = await fetch(`${htmlProxy}${encodeURIComponent(urlInput)}`);
         const json = await res.json();
         const html = json.contents;
 
@@ -100,13 +101,13 @@ export default function App() {
         });
       }
 
-      if (foundImages.length > 2) {
+      if (foundImages.length > 0) {
         setReaderData({ images: [...new Set(foundImages)] });
       } else {
         alert("The void is too strong. No pages found. Ensure you are using a direct chapter link.");
       }
     } catch (err) {
-      alert("Sanctification failed. The site might be blocked or the link is invalid.");
+      alert("Sanctification failed. The site blocked the request or the link is invalid.");
     } finally {
       setIsSanctifying(false);
       setUrlInput("");
@@ -264,4 +265,5 @@ export default function App() {
     </div>
   );
 }
+
 
