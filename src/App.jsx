@@ -56,18 +56,21 @@ export default function App() {
     <div className={`min-h-screen w-full ${theme.bg} ${theme.text} transition-colors duration-1000 flex flex-col font-sans overflow-x-hidden relative`}>
       <Atmosphere phase={phase} />
 
-      {/* --- NAV --- */}
+      {/* --- NAVIGATION --- */}
       <nav className="fixed top-0 left-0 right-0 h-16 px-6 flex items-center justify-between z-[100] backdrop-blur-xl border-b border-current/5">
         <div className="flex items-center gap-2">
           <Library size={22} className="text-[#E6C35C]" />
           <span className="text-sm font-serif tracking-[0.2em] uppercase font-bold">Aniomics</span>
         </div>
-        <button onClick={() => setPhase(isNight ? 'day' : 'night')} className="p-2 opacity-60">
-           {isNight ? <Moon size={16} /> : <Sun size={16} />}
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setPhase(isNight ? 'day' : 'night')} className="p-2 opacity-60">
+             {isNight ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
+          <button className="px-4 py-1.5 bg-[#E6C35C] text-black text-[9px] uppercase font-black tracking-widest rounded-full shadow-lg active:scale-95 transition-all">Get App</button>
+        </div>
       </nav>
 
-      {/* --- HERO --- */}
+      {/* --- HERO SECTION --- */}
       <header className="pt-32 pb-12 px-6 flex flex-col items-center text-center z-10">
         <div className="flex items-center justify-center gap-2 mb-4 text-[#E6C35C] animate-pulse">
           <Sparkles size={12} />
@@ -92,24 +95,24 @@ export default function App() {
         </form>
       </header>
 
-      {/* --- STATS --- */}
+      {/* --- STATS SECTION --- */}
       <section className="px-8 py-4 z-10 max-w-md mx-auto w-full mb-12">
          <div className="flex justify-center gap-12 opacity-60">
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center text-center">
                <Users size={18} className="text-[#E6C35C] mb-1" />
-               <span className="text-lg font-serif tracking-widest">1,204</span>
-               <span className="text-[7px] uppercase tracking-widest font-bold">Active Souls</span>
+               <span className="text-xl font-serif tracking-widest leading-none">1,204</span>
+               <span className="text-[7px] uppercase tracking-widest font-bold mt-1">Active Souls</span>
             </div>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center text-center">
                <Zap size={18} className="text-[#E6C35C] mb-1" />
-               <span className="text-lg font-serif tracking-widest">42k</span>
-               <span className="text-[7px] uppercase tracking-widest font-bold">Cleansed</span>
+               <span className="text-xl font-serif tracking-widest leading-none">42k</span>
+               <span className="text-[7px] uppercase tracking-widest font-bold mt-1">Cleansed</span>
             </div>
          </div>
       </section>
 
-      {/* --- FAQ SECTION (SCROLLS OF INQUIRY) --- */}
-      <section className="px-6 py-12 z-10 max-w-md mx-auto w-full">
+      {/* --- FAQ SECTION --- */}
+      <section className="px-6 py-12 z-10 max-w-md mx-auto w-full mb-20">
          <div className="flex items-center gap-2 text-[#E6C35C] mb-8 justify-center">
             <HelpCircle size={14} />
             <span className="text-[9px] uppercase font-black tracking-[0.3em]">Scrolls of Inquiry</span>
@@ -134,13 +137,16 @@ export default function App() {
          </div>
       </section>
 
-      {/* --- FOOTER --- */}
+      {/* --- FOOTER (WEBTOON STYLE) --- */}
       <footer className="mt-auto pt-16 pb-28 border-t border-current/5 flex flex-col items-center z-10 bg-black/40 backdrop-blur-md">
+        {/* Social Icons */}
         <div className="flex gap-8 mb-10 opacity-60">
           <a href="https://discord.gg/5FHVw9wDfh" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><MessageCircle size={22} /></a>
           <a href="https://t.me/AniOmics" target="_blank" rel="noreferrer" className="hover:text-[#E6C35C] transition-colors"><TelegramIcon size={22} /></a>
           <a href="mailto:support@aniomics.art" className="hover:text-[#E6C35C] transition-colors"><Mail size={22} /></a>
         </div>
+        
+        {/* Links Grid */}
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-3 px-6 mb-8 max-w-xs text-center">
           {['ABOUT', 'FEEDBACK', 'HELP', 'TERMS', 'PRIVACY', 'DMCA', 'CONTACT'].map((link, i) => (
             <React.Fragment key={link}>
@@ -149,14 +155,16 @@ export default function App() {
             </React.Fragment>
           ))}
         </div>
+        
         <p className="text-[9px] uppercase tracking-[0.3em] font-black text-[#E6C35C] mb-12">support@aniomics.art</p>
+        
         <div className="flex items-center gap-2 opacity-10 scale-75">
           <Library size={18} />
           <span className="text-[11px] uppercase tracking-[0.4em] font-bold">Aniomics Sanctuary © 2026</span>
         </div>
       </footer>
 
-      {/* --- FIXED APP BUTTON (WEBTOON STYLE) --- */}
+      {/* --- FLOATING APP BUTTON (WEBTOON STYLE) --- */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-[280px] px-4">
         <button className="w-full h-14 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-between px-2 pr-6 shadow-2xl active:scale-95 transition-all group overflow-hidden">
           <div className="flex items-center gap-3">
@@ -171,8 +179,11 @@ export default function App() {
 
       {/* --- TOP BUTTON --- */}
       {showTop && (
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-8 right-6 w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151] active:scale-90 transition-transform">
-          <span className="text-[9px] font-black">TOP</span>
+        <button 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+          className="fixed bottom-8 right-6 w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-2xl z-[151] active:scale-90 transition-transform animate-in fade-in zoom-in"
+        >
+          <span className="text-[9px] font-black tracking-tighter">TOP</span>
         </button>
       )}
     </div>
