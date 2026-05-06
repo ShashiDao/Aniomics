@@ -2,11 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Updated Icons for PWA -->
-    <link rel="icon" type="image/png" href="/logo192.png" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
     
-    <!-- Link to the Manifest -->
+    <!-- Primary Favicon (Standard for Browser Tabs) -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    
+    <!-- Apple Touch Icon (For iOS Home Screen) -->
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    
+    <!-- Link to the Manifest for PWA Support -->
     <link rel="manifest" href="/manifest.json" />
     
     <!-- Theme Color for Mobile Browser Bars -->
@@ -15,6 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Aniomics Sanctuary</title>
     
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -28,14 +32,20 @@
         },
       }
     </script>
+    
     <style>
-      body { background-color: #050505; margin: 0; }
-      #root { min-height: 100vh; }
+      body { 
+        background-color: #050505; 
+        margin: 0; 
+      }
+      #root { 
+        min-height: 100vh; 
+      }
     </style>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Vite Main Entry Point -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-
